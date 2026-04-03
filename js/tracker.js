@@ -77,7 +77,7 @@ function analyzeNetwork() {
 
 async function checkHeaders() {
     try {
-        const response = await fetch('css/style.css', { method: 'HEAD' });
+        const response = await fetch(window.location.href, { method: 'HEAD' });
         const cfCacheStatus = response.headers.get('cf-cache-status');
         const awsCacheStatus = response.headers.get('x-cache');
         

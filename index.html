@@ -39,11 +39,11 @@
 
         <div class="actions glass">
             <h2>Bảng Điều Khiển Thực Nghiệm</h2>
-            <p>1. <strong>Giả lập Origin (Màu Đỏ):</strong> Giả lập kết nối thẳng không qua mạng để lấy dữ liệu làm ảnh So sánh Trước/Sau.<br>
-            2. <strong>Cache Invalidation:</strong> Tải lại hệ thống nhằm truy vết rác lưu đệm bộ nhớ (Stale Data).</p>
+            <p>1. <strong>Giả lập Origin:</strong> Fake tín hiệu trễ mạng lấy màu đỏ chụp Báo Cáo.<br>
+            2. <strong>Phá đệm (Cache Busting):</strong> Gắn mã chống lưu đệm vào tên miền để bắt Server Mỹ phải xuất data gốc thêm lần nữa, ép biến thành Cache Miss.</p>
             <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="action-btn" onclick="simulateOrigin()" style="background: rgba(220, 53, 69, 0.15); border-color: rgba(220, 53, 69, 0.5);">Giả lập Gốc Mỹ (Origin)</button>
-                <button class="action-btn" onclick="window.location.reload(true)">Tải Lại Kiểm Thử Cache (F5)</button>
+                <button class="action-btn" onclick="simulateOrigin()" style="background: rgba(220, 53, 69, 0.15); border-color: rgba(220, 53, 69, 0.5);">Giả lập Gốc Mỹ (Chụp ảnh)</button>
+                <button class="action-btn" onclick="window.location.href = window.location.pathname + '?v=' + Date.now()">Phá đệm Cache Busting (Miss)</button>
             </div>
         </div>
     </div>
