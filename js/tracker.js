@@ -85,3 +85,28 @@ async function checkHeaders() {
         console.warn("Could not fetch header stats");
     }
 }
+
+function simulateOrigin() {
+    const fakeTTFB = (Math.random() * (350 - 280) + 280).toFixed(2);
+    
+    const ttfbValue = document.getElementById("ttfb-value");
+    const ttfbStatus = document.getElementById("ttfb-status");
+    const ttfbCard = document.getElementById("ttfb-card");
+    const edgeStatusValue = document.getElementById("edge-status");
+    const edgeDescText = document.getElementById("edge-desc");
+    const hitStatusValue = document.getElementById("cache-hit-status");
+    
+    // Đổ đỏ toàn bộ khối UI
+    ttfbValue.textContent = `${fakeTTFB} ms`;
+    
+    ttfbStatus.textContent = "Chậm/Ping dội cao (Miss)";
+    ttfbStatus.className = "metric-status status-danger";
+    ttfbCard.className = "metric-card glass border-danger";
+    
+    edgeStatusValue.textContent = "Máy Chủ Gốc";
+    edgeStatusValue.className = "metric-value status-danger";
+    edgeDescText.textContent = "Tải trực tiếp ở rùa từ Máy chủ trung tâm (Origin) bên kia Đại dương.";
+    
+    hitStatusValue.textContent = "MISS / BYPASS";
+    hitStatusValue.className = "metric-value status-danger";
+}
