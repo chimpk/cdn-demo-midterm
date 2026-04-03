@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Version meta tag used for Cache Invalidation Demo -->
+    <meta name="app-version" content="1.0.0">
+    <title>CDN Performance Analyzer</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-mesh"></div>
+    <div class="dashboard-container glass">
+        <header class="dashboard-header">
+            <h1>CDN Performance Analyzer</h1>
+            <p>Self-Analyzing Metrics Dashboard</p>
+            <div class="version-badge" id="version-display">Version: <span>Loading...</span></div>
+        </header>
+
+        <div class="metrics-grid">
+            <div class="metric-card glass" id="ttfb-card">
+                <div class="metric-title">TTFB (Time To First Byte)</div>
+                <div class="metric-value" id="ttfb-value">-- ms</div>
+                <div class="metric-status" id="ttfb-status">Analyzing network...</div>
+            </div>
+
+            <div class="metric-card glass">
+                <div class="metric-title">CDN Edge Status</div>
+                <div class="metric-value" id="edge-status">Pending</div>
+                <div class="metric-desc" id="edge-desc">Determining request origin...</div>
+            </div>
+            
+            <div class="metric-card glass">
+                <div class="metric-title">CF-Cache-Status</div>
+                <div class="metric-value" id="cache-hit-status">N/A</div>
+                <div class="metric-desc">Custom Rule Validation</div>
+            </div>
+        </div>
+
+        <div class="actions glass">
+            <h2>Cache Invalidation Test</h2>
+            <p>To test cache invalidation, update the <code>app-version</code> meta tag in this file on your origin server, then execute the Purge command via your CDN provider.</p>
+            <button class="action-btn" onclick="window.location.reload(true)">Reload / Fetch Fresh</button>
+        </div>
+    </div>
+    <script src="js/tracker.js"></script>
+</body>
+</html>

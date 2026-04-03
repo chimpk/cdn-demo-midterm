@@ -1,0 +1,196 @@
+:root {
+    --bg-color: #0b0f19;
+    --primary-color: #00f2fe;
+    --secondary-color: #4facfe;
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --text-main: #f8f9fa;
+    --text-muted: #adb5bd;
+    --success: #20c997;
+    --danger: #ff4d4f;
+    --warning: #ffc107;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+}
+
+html, body {
+    overflow-x: hidden;
+    width: 100%;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    min-height: 100vh;
+    position: relative;
+    padding: 1px 0;
+}
+
+/* Background Mesh Gradient */
+.background-mesh {
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 50% 50%, rgba(79, 172, 254, 0.15), transparent 40%),
+                radial-gradient(circle at 80% 20%, rgba(0, 242, 254, 0.1), transparent 30%);
+    animation: rotate 60s linear infinite;
+    z-index: 0;
+}
+
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.dashboard-container {
+    width: 92%;
+    max-width: 1000px;
+    z-index: 10;
+    padding: 2.5rem;
+    border-radius: 24px;
+    margin: 3rem auto;
+}
+
+.glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    position: relative;
+}
+
+.dashboard-header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-header p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+.version-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 30px;
+    font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.metric-card {
+    padding: 2rem;
+    border-radius: 16px;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 242, 254, 0.15);
+}
+
+.metric-title {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    color: var(--text-main);
+}
+
+.metric-status, .metric-desc {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+/* Status Colors */
+.status-success { color: var(--success); }
+.status-danger { color: var(--danger); }
+.status-warning { color: var(--warning); }
+
+.border-success { border-color: rgba(32, 201, 151, 0.4) !important; }
+.border-danger { border-color: rgba(255, 77, 79, 0.4) !important; }
+
+.actions {
+    padding: 2rem;
+    border-radius: 16px;
+    text-align: center;
+}
+
+.actions h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.actions p {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.action-btn {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: #fff;
+    border: none;
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+}
+
+.action-btn:hover {
+    opacity: 0.9;
+    transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 1rem 0.5rem;
+    }
+    .dashboard-container {
+        padding: 1.5rem;
+        margin: 1.5rem auto;
+    }
+    .actions {
+        padding: 1.5rem 1rem;
+    }
+    .dashboard-header h1 { font-size: 2rem; }
+    .version-badge { position: relative; display: inline-block; margin-top: 1rem; }
+}
