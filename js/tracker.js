@@ -36,7 +36,17 @@ function analyzeNetwork() {
         
         ttfbValue.textContent = `${formattedTTFB} ms`;
 
-        if (formattedTTFB > 300) {
+        const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost" || window.location.protocol === "file:";
+
+        if (isLocal) {
+            ttfbStatus.textContent = "Môi trường Local (Bỏ qua)";
+            ttfbStatus.className = "metric-status status-warning";
+            ttfbCard.classList.add("border-warning");
+            
+            edgeStatusValue.textContent = "Máy Tính Cá Nhân";
+            edgeStatusValue.className = "metric-value status-warning";
+            edgeDescText.textContent = "App đang chạy thẳng từ ổ cứng Localhost, không có độ trễ mạng Internet.";
+        } else if (formattedTTFB > 300) {
             ttfbStatus.textContent = "Chậm/Ping dội cao (Miss)";
             ttfbStatus.className = "metric-status status-danger";
             ttfbCard.classList.add("border-danger");
