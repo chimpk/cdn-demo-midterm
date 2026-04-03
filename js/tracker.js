@@ -37,31 +37,31 @@ function analyzeNetwork() {
         ttfbValue.textContent = `${formattedTTFB} ms`;
 
         if (formattedTTFB > 300) {
-            ttfbStatus.textContent = "High latency - Cache Miss";
+            ttfbStatus.textContent = "Chậm/Ping dội cao (Miss)";
             ttfbStatus.className = "metric-status status-danger";
             ttfbCard.classList.add("border-danger");
             
-            edgeStatusValue.textContent = "Origin Server";
+            edgeStatusValue.textContent = "Máy Chủ Gốc";
             edgeStatusValue.className = "metric-value status-danger";
-            edgeDescText.textContent = "Request served directly from central server.";
+            edgeDescText.textContent = "Tải trực tiếp ở rùa từ Máy chủ trung tâm (Origin).";
         } else if (formattedTTFB < 100) {
-            ttfbStatus.textContent = "Ultra Low latency - Cache Hit";
+            ttfbStatus.textContent = "Siêu Tốc (Cache Hit)";
             ttfbStatus.className = "metric-status status-success";
             ttfbCard.classList.add("border-success");
             
-            edgeStatusValue.textContent = "Edge CDN (PoPs)";
+            edgeStatusValue.textContent = "Trạm CDN (PoPs)";
             edgeStatusValue.className = "metric-value status-success";
-            edgeDescText.textContent = "Served instantly from the nearest Edge location.";
+            edgeDescText.textContent = "Nhận phản hồi lập tức từ trạm CDN biên chi nhánh gần nhất.";
         } else {
-            ttfbStatus.textContent = "Average Latency";
+            ttfbStatus.textContent = "Mạng Chuyển Tiếp (Warning)";
             ttfbStatus.className = "metric-status status-warning";
             
-            edgeStatusValue.textContent = "Intermediate";
+            edgeStatusValue.textContent = "Mạng hỗn hợp";
             edgeStatusValue.className = "metric-value status-warning";
-            edgeDescText.textContent = "Network path is being heavily routed.";
+            edgeDescText.textContent = "Khả năng cao đang ở luồng định tuyến proxy hỗn hợp.";
         }
     } else {
-        document.getElementById("ttfb-status").textContent = "Navigation Timing API not supported.";
+        document.getElementById("ttfb-status").textContent = "Trình duyệt không cập nhật API TTFB.";
     }
 }
 
@@ -78,7 +78,7 @@ async function checkHeaders() {
             hitStatusValue.textContent = statusText;
             hitStatusValue.className = statusText.includes('HIT') ? "metric-value status-success" : "metric-value status-warning";
         } else {
-            hitStatusValue.innerHTML = "Not Detected<br><span style='font-size: 1rem; color: var(--text-muted);'>No CDN proxy</span>";
+            hitStatusValue.innerHTML = "Not Detected<br><span style='font-size: 1rem; color: var(--text-muted);'>Chưa đánh chặn/Local</span>";
             hitStatusValue.className = "metric-value status-warning";
         }
     } catch(err) {
