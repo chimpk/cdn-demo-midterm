@@ -1,7 +1,7 @@
 ================================================================
   BÁO CÁO GIỮA KỲ - ĐỀ TÀI SỐ 8
   MẠNG PHÂN PHỐI NỘI DUNG (CDN - Content Delivery Networks)
-  Môn: Ứng dụng và Lập trình Web - 503073
+  Môn: Lập trình Web và Ứng dụng - 503073
   Học kỳ 2 - Năm học 2025-2026
 ================================================================
 

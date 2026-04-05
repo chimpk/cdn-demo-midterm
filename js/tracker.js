@@ -23,9 +23,14 @@ function detectEnvironment() {
 
 function simulateUpdate() {
     currentVersion++;
+    const env = detectEnvironment();
     const banner = document.getElementById('env-banner');
     banner.style.cssText = 'background:rgba(255,193,7,0.1);color:#ffc107;border:1px solid #ffc10744;border-radius:12px;padding:1rem;margin-bottom:1rem;';
-    banner.innerHTML = `<strong>🚀 CACHE BUSTING (v${currentVersion}.0)</strong><br><small>Thêm query string (?v=${currentVersion}) vào URL để ép CDN tải lại từ Origin — mô phỏng kịch bản Invalidation.</small>`;
+    if (env === 'local') {
+        banner.innerHTML = `<strong>🚀 CACHE BUSTING (v${currentVersion}.0) — Chế độ Local</strong><br><small>⚠️ Cache Busting (?_v=${currentVersion}) chỉ có hiệu lực khi chạy trên CDN. Ở local (file://), không có Edge Cache để Invalidate. Đang đo lại Origin...</small>`;
+    } else {
+        banner.innerHTML = `<strong>🚀 CACHE BUSTING (v${currentVersion}.0)</strong><br><small>Thêm query string (?_v=${currentVersion}) vào URL để ép CDN tải lại từ Origin — mô phỏng kịch bản Invalidation.</small>`;
+    }
     setTimeout(runAnalysis, 1500);
 }
 
