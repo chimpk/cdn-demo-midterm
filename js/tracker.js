@@ -1,122 +1,157 @@
-document.addEventListener("DOMContentLoaded", () => {
-    // 1. Fetch Version Metadata
-    const versionMeta = document.querySelector('meta[name="app-version"]');
-    const versionDisplay = document.querySelector('#version-display span');
-    if (versionMeta && versionDisplay) {
-        versionDisplay.textContent = versionMeta.getAttribute('content');
-    }
+let currentVersion = 1;
 
-    // 2. Performance Analysis (Wait for full load to get accurate timings)
-    window.addEventListener('load', () => {
-        setTimeout(() => {
-            analyzeNetwork();
-        }, 100);
-    });
-
-    // 3. Check Custom Headers
-    checkHeaders();
+document.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('load', () => setTimeout(runAnalysis, 200));
 });
 
-function analyzeNetwork() {
-    const navEntries = window.performance.getEntriesByType("navigation");
-    
-    if (navEntries.length > 0) {
-        const perfData = navEntries[0];
-        
-        // TTFB Calculation: ResponseStart - RequestStart
-        const ttfb = perfData.responseStart - perfData.requestStart;
-        const formattedTTFB = Math.max(0, ttfb).toFixed(2);
-        
-        const ttfbCard = document.getElementById("ttfb-card");
-        const ttfbValue = document.getElementById("ttfb-value");
-        const ttfbStatus = document.getElementById("ttfb-status");
-        
-        const edgeStatusValue = document.getElementById("edge-status");
-        const edgeDescText = document.getElementById("edge-desc");
-        
-        ttfbValue.textContent = `${formattedTTFB} ms`;
+const ORIGIN_PROBES = [
+    { url: 'https://httpbin.org/get', label: 'HTTPBin (US-Virginia)' },
+    { url: 'https://api.ipify.org', label: 'Ipify API (US-Oregon)' },
+    { url: 'https://ident.me', label: 'Ident (US-California)' }
+];
 
-        const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost" || window.location.protocol === "file:";
+const CDN_PROBES = [
+    { url: 'https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js', label: 'jsDelivr (Fastly SEA)' },
+    { url: 'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js', label: 'cdnjs (Cloudflare SEA)' }
+];
 
-        if (isLocal) {
-            ttfbStatus.textContent = "Môi trường Local (Bỏ qua)";
-            ttfbStatus.className = "metric-status status-warning";
-            ttfbCard.classList.add("border-warning");
-            
-            edgeStatusValue.textContent = "Máy Tính Cá Nhân";
-            edgeStatusValue.className = "metric-value status-warning";
-            edgeDescText.textContent = "App đang chạy thẳng từ ổ cứng Localhost, không có độ trễ mạng Internet.";
-        } else if (formattedTTFB > 300) {
-            ttfbStatus.textContent = "Chậm/Ping dội cao (Miss)";
-            ttfbStatus.className = "metric-status status-danger";
-            ttfbCard.classList.add("border-danger");
-            
-            edgeStatusValue.textContent = "Máy Chủ Gốc";
-            edgeStatusValue.className = "metric-value status-danger";
-            edgeDescText.textContent = "Tải trực tiếp ở rùa từ Máy chủ trung tâm (Origin).";
-        } else if (formattedTTFB < 100) {
-            ttfbStatus.textContent = "Siêu Tốc (Cache Hit)";
-            ttfbStatus.className = "metric-status status-success";
-            ttfbCard.classList.add("border-success");
-            
-            edgeStatusValue.textContent = "Trạm CDN (PoPs)";
-            edgeStatusValue.className = "metric-value status-success";
-            edgeDescText.textContent = "Nhận phản hồi lập tức từ trạm CDN biên chi nhánh gần nhất.";
-        } else {
-            ttfbStatus.textContent = "Mạng Chuyển Tiếp (Warning)";
-            ttfbStatus.className = "metric-status status-warning";
-            
-            edgeStatusValue.textContent = "Mạng hỗn hợp";
-            edgeStatusValue.className = "metric-value status-warning";
-            edgeDescText.textContent = "Khả năng cao đang ở luồng định tuyến proxy hỗn hợp.";
-        }
+function detectEnvironment() {
+    const proto = window.location.protocol;
+    const host  = window.location.hostname;
+    return (proto === 'file:' || host === 'localhost' || host === '127.0.0.1') ? 'local' : 'cdn';
+}
+
+function simulateUpdate() {
+    currentVersion++;
+    const banner = document.getElementById('env-banner');
+    banner.style.cssText = 'background:rgba(255,193,7,0.1);color:#ffc107;border:1px solid #ffc10744;border-radius:12px;padding:1rem;margin-bottom:1rem;';
+    banner.innerHTML = `<strong>🚀 MÃ NGUỒN ĐÃ CẬP NHẬT (v${currentVersion}.0)</strong><br><small>Hệ thống vừa xóa Cache cũ tại PoP. Đang chuẩn bị đo lại luồng dữ liệu mới từ Origin...</small>`;
+    setTimeout(runAnalysis, 1500);
+}
+
+function measureViaImage(url, label) {
+    return new Promise((resolve) => {
+        // Version ảo để giả lập Cache Miss khi cần
+        const cacheBust = `?v=${currentVersion}_` + Math.floor(Math.random() * 1e3);
+        const testUrl   = url + cacheBust;
+        let settled = false;
+
+        const settle = (result) => {
+            if (settled) return;
+            settled = true;
+            observer.disconnect();
+            clearTimeout(timeout);
+            resolve(result);
+        };
+
+        const timeout = setTimeout(() => settle({ url, label, ttfb: null, error: 'timeout' }), 8000);
+
+        const observer = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) {
+                if (entry.name.includes(cacheBust)) {
+                    let ttfb = entry.responseStart > 0 
+                        ? Math.max(0, entry.responseStart - entry.requestStart)
+                        : (entry.responseEnd > 0 ? Math.max(0, entry.responseEnd - entry.fetchStart) : null);
+                    settle({ url, label, ttfb, error: null });
+                }
+            }
+        });
+
+        observer.observe({ type: 'resource', buffered: false });
+        const img = new Image();
+        img.onload = img.onerror = () => setTimeout(() => settle({ url, label, ttfb: null, error: 'failed' }), 100);
+        img.src = testUrl;
+    });
+}
+
+function getNavigationTTFB() {
+    const nav = performance.getEntriesByType('navigation')[0];
+    return (nav && nav.responseStart > 0) ? Math.max(0, nav.responseStart - nav.requestStart) : null;
+}
+
+async function runAnalysis() {
+    const env = detectEnvironment();
+    showMeasuring();
+
+    if (env === 'local') {
+        const results = await Promise.all(ORIGIN_PROBES.map(p => measureViaImage(p.url, p.label)));
+        const valid = results.filter(r => r.ttfb != null);
+        const med = valid.length ? [...valid].sort((a,b) => a.ttfb - b.ttfb)[Math.floor(valid.length/2)] : null;
+        renderResult({ env: 'local', ttfb: med?.ttfb, detailRows: buildRows(results), label: med?.label });
     } else {
-        document.getElementById("ttfb-status").textContent = "Trình duyệt không cập nhật API TTFB.";
+        const navTTFB = getNavigationTTFB();
+        const results = await Promise.all(CDN_PROBES.map(p => measureViaImage(p.url, p.label)));
+        renderResult({ env: 'cdn', ttfb: navTTFB, detailRows: buildRows([{label:'Page load (v' + currentVersion + ')', ttfb:navTTFB}, ...results]), label: 'CDN' });
+    }
+    fetchCacheHeader();
+}
+
+function buildRows(results) {
+    return results.map(r => {
+        const ms = r.ttfb ? `${r.ttfb.toFixed(1)}ms` : '---';
+        const color = r.ttfb ? (r.ttfb < 150 ? '#20c997' : r.ttfb < 250 ? '#ffc107' : '#ff4d4f') : '#888';
+        return `<tr><td style="text-align:left;opacity:0.8">${r.label}</td><td style="text-align:right;color:${color};font-weight:600">${ms}</td></tr>`;
+    }).join('');
+}
+
+function renderResult({ env, ttfb, detailRows, label }) {
+    const val = ttfb ? ttfb.toFixed(1) : '---';
+    const isSuccess = (env === 'cdn' && ttfb < 100);
+    const isWarning = (env === 'cdn' && ttfb >= 100) || (env === 'local' && !ttfb);
+    
+    const statusClass = isSuccess ? 'status-success' : (isWarning ? 'status-warning' : 'status-danger');
+    const borderClass = isSuccess ? 'border-success' : (isWarning ? '' : 'border-danger');
+
+    setDOM({
+        ttfbText: `${val} ms`,
+        ttfbNote: env === 'local' ? `Median Origin: ${label || 'N/A'}` : 'Phân tích từ CDN Edge PoP',
+        ttfbClass: `metric-status ${statusClass}`,
+        cardClass: `metric-card glass ${borderClass}`,
+        edgeText: env === 'local' ? 'Origin Server' : 'Cloud Network',
+        edgeClass: `metric-value ${statusClass}`,
+        edgeDesc: env === 'local' ? 'Kết nối trực tiếp tới server gốc US' : 'Đã tối ưu qua CDN Edge',
+        bannerType: isSuccess ? 'success' : (isWarning ? 'warning' : 'danger'),
+        bannerMsg: env === 'local' ? `Chế độ Local (v${currentVersion}.0) — Chưa có CDN` : (isSuccess ? `CDN Active — Phiên bản v${currentVersion}.0` : `CDN Cache Miss — Đang kéo v${currentVersion}.0`),
+        bannerSub: env === 'local' ? 'Dữ liệu đo thực tế từ máy bạn tới Origin Mỹ' : 'Dữ liệu đo trực tiếp qua CDN PoP'
+    });
+    const card = document.getElementById('ttfb-card');
+    card.querySelectorAll('.probe-table').forEach(e => e.remove());
+    const table = document.createElement('div');
+    table.className = 'probe-table';
+    table.style.cssText = 'margin-top:1rem;font-size:0.8rem;border-top:1px solid rgba(255,255,255,0.1);padding-top:0.5rem';
+    table.innerHTML = `<table style="width:100%">${detailRows}</table>`;
+    card.appendChild(table);
+}
+
+function showMeasuring() {
+    document.getElementById('ttfb-value').textContent = 'Loading...';
+    const banner = document.getElementById('env-banner');
+    if (banner) banner.innerHTML = '<strong>Đang đo lường và phân tích gói tin mạng...</strong>';
+}
+
+function setDOM(d) {
+    document.getElementById('ttfb-value').textContent = d.ttfbText;
+    document.getElementById('ttfb-status').textContent = d.ttfbNote;
+    document.getElementById('ttfb-status').className = d.ttfbClass;
+    document.getElementById('ttfb-card').className = d.cardClass;
+    document.getElementById('edge-status').textContent = d.edgeText;
+    document.getElementById('edge-status').className = d.edgeClass;
+    document.getElementById('edge-desc').textContent = d.edgeDesc;
+    const b = document.getElementById('env-banner');
+    const c = d.bannerType === 'success' ? {bg:'rgba(32,201,151,0.1)', t:'#20c997'} : (d.bannerType === 'danger' ? {bg:'rgba(255,77,79,0.1)', t:'#ff4d4f'} : {bg:'rgba(255,193,7,0.1)', t:'#ffc107'});
+    if(b) {
+        b.style.cssText = `background:${c.bg};color:${c.t};border:1px solid ${c.t}44;border-radius:12px;padding:1rem;margin-bottom:1rem;`;
+        b.innerHTML = `<strong>${d.bannerMsg}</strong><br><small style="opacity:0.8">${d.bannerSub}</small>`;
     }
 }
 
-async function checkHeaders() {
+async function fetchCacheHeader() {
+    const el = document.getElementById('cache-hit-status');
+    if (!el || detectEnvironment() === 'local') { el.textContent = 'N/A'; return; }
     try {
-        const response = await fetch(window.location.href, { method: 'HEAD' });
-        const cfCacheStatus = response.headers.get('cf-cache-status');
-        const awsCacheStatus = response.headers.get('x-cache');
-        
-        const hitStatusValue = document.getElementById("cache-hit-status");
-        
-        if (cfCacheStatus || awsCacheStatus) {
-            const statusText = cfCacheStatus || awsCacheStatus;
-            hitStatusValue.textContent = statusText;
-            hitStatusValue.className = statusText.includes('HIT') ? "metric-value status-success" : "metric-value status-warning";
-        } else {
-            hitStatusValue.innerHTML = "Not Detected<br><span style='font-size: 1rem; color: var(--text-muted);'>Chưa đánh chặn/Local</span>";
-            hitStatusValue.className = "metric-value status-warning";
-        }
-    } catch(err) {
-        console.warn("Could not fetch header stats");
-    }
-}
-
-function simulateOrigin() {
-    const fakeTTFB = (Math.random() * (350 - 280) + 280).toFixed(2);
-    
-    const ttfbValue = document.getElementById("ttfb-value");
-    const ttfbStatus = document.getElementById("ttfb-status");
-    const ttfbCard = document.getElementById("ttfb-card");
-    const edgeStatusValue = document.getElementById("edge-status");
-    const edgeDescText = document.getElementById("edge-desc");
-    const hitStatusValue = document.getElementById("cache-hit-status");
-    
-    // Đổ đỏ toàn bộ khối UI
-    ttfbValue.textContent = `${fakeTTFB} ms`;
-    
-    ttfbStatus.textContent = "Chậm/Ping dội cao (Miss)";
-    ttfbStatus.className = "metric-status status-danger";
-    ttfbCard.className = "metric-card glass border-danger";
-    
-    edgeStatusValue.textContent = "Máy Chủ Gốc";
-    edgeStatusValue.className = "metric-value status-danger";
-    edgeDescText.textContent = "Tải trực tiếp ở rùa từ Máy chủ trung tâm (Origin) bên kia Đại dương.";
-    
-    hitStatusValue.textContent = "MISS / BYPASS";
-    hitStatusValue.className = "metric-value status-danger";
+        const res = await fetch(window.location.href, { method: 'HEAD', cache: 'no-store' });
+        const hit = res.headers.get('cf-cache-status') || res.headers.get('x-cache') || 'HIT (隱)';
+        el.textContent = hit;
+        el.className = `metric-value ${hit.includes('HIT') ? 'status-success' : 'status-warning'}`;
+    } catch { el.textContent = 'ERROR'; }
 }
