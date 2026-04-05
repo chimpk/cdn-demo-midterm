@@ -72,18 +72,32 @@ function measureViaImage(url, label) {
 }
 
 // ===== Đo TTFB qua Fetch API (dùng khi chạy trên HTTPS) =====
-async function measureViaFetch(url, label) {
-    const sep = url.includes('?') ? '&' : '?';
-    const fullUrl = url + sep + 'v=' + currentVersion + '_' + Date.now();
+// bustCache=true: thêm query string cache-busting (dùng cho same-origin page)
+// bustCache=false: giữ URL gốc để CDN trả Cache HIT (dùng cho CDN probes)
+async function measureViaFetch(url, label, bustCache = true) {
+    let fullUrl;
+    if (bustCache) {
+        const sep = url.includes('?') ? '&' : '?';
+        fullUrl = url + sep + 'v=' + currentVersion + '_' + Date.now();
+    } else {
+        fullUrl = url;
+    }
     const start = performance.now();
     try {
-        await fetch(fullUrl, { method: 'GET', cache: 'no-cache' });
+        // HEAD tránh tải toàn bộ file nặng (jQuery ~87KB), chỉ đo RTT
+        const method = bustCache ? 'GET' : 'HEAD';
+        const res = await fetch(fullUrl, { method, cache: 'no-cache', mode: 'cors' })
+            .catch(() => fetch(fullUrl, { method: 'GET', cache: 'no-cache', mode: 'cors' }));
         // Lấy dữ liệu TTFB từ Resource Timing API
         const entries = performance.getEntriesByName(fullUrl);
         const entry = entries[entries.length - 1];
         let ttfb;
         if (entry && entry.responseStart > 0) {
+            // TTFB chính xác (cần Timing-Allow-Origin từ server)
             ttfb = entry.responseStart - entry.requestStart;
+        } else if (entry && entry.duration > 0) {
+            // Cross-origin không có TAO → duration ≈ Network RTT (HEAD nên rất gần TTFB)
+            ttfb = entry.duration;
         } else {
             ttfb = performance.now() - start;
         }
@@ -110,8 +124,8 @@ async function runAnalysis() {
         renderResult({ env: 'local', ttfb: med?.ttfb, detailRows: buildRows(results), label: med?.label });
     } else {
         // CDN: dùng Fetch API trực tiếp (CORS hợp lệ trên HTTPS)
-        const pageProbe = await measureViaFetch(window.location.origin + window.location.pathname, 'Current Page (Edge)');
-        const results = await Promise.all(CDN_PROBES.map(p => measureViaFetch(p.url, p.label)));
+        const pageProbe = await measureViaFetch(window.location.origin + window.location.pathname, 'Current Page (Edge)', true);
+        const results = await Promise.all(CDN_PROBES.map(p => measureViaFetch(p.url, p.label, false)));
         
         // Ưu tiên số đo latency thực tế mới nhất
         const currentTTFB = pageProbe.ttfb || getNavigationTTFB();
