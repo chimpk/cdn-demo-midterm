@@ -11,8 +11,8 @@ const ORIGIN_PROBES = [
 ];
 
 const CDN_PROBES = [
-    { url: 'https://cdn.jsdelivr.net/npm/is-number@7.0.0/index.js', label: 'jsDelivr (Fastly)' },
-    { url: 'https://cdnjs.cloudflare.com/ajax/libs/tiny-emitter/2.1.0/tinyemitter.min.js', label: 'cdnjs (Cloudflare)' }
+    { url: 'https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js', label: 'jsDelivr (Fastly SEA)' },
+    { url: 'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js', label: 'cdnjs (Cloudflare SEA)' }
 ];
 
 function detectEnvironment() {
@@ -72,23 +72,12 @@ function measureViaImage(url, label) {
 }
 
 // ===== Đo TTFB qua Fetch API (dùng khi chạy trên HTTPS) =====
-// bustCache=true: thêm query string để ép CDN tải lại (dùng cho current page)
-// bustCache=false: giữ URL gốc để đo CDN cache HIT (dùng cho CDN probes)
-async function measureViaFetch(url, label, bustCache = true) {
-    let fullUrl;
-    let fetchOpts;
-    if (bustCache) {
-        const sep = url.includes('?') ? '&' : '?';
-        fullUrl = url + sep + 'v=' + currentVersion + '_' + Date.now();
-        fetchOpts = { method: 'GET', cache: 'no-cache' };
-    } else {
-        fullUrl = url;
-        // no-store: bỏ qua browser cache nhưng giữ nguyên URL → CDN cache HIT
-        fetchOpts = { method: 'GET', cache: 'no-store' };
-    }
+async function measureViaFetch(url, label) {
+    const sep = url.includes('?') ? '&' : '?';
+    const fullUrl = url + sep + 'v=' + currentVersion + '_' + Date.now();
     const start = performance.now();
     try {
-        await fetch(fullUrl, fetchOpts);
+        await fetch(fullUrl, { method: 'GET', cache: 'no-cache' });
         // Lấy dữ liệu TTFB từ Resource Timing API
         const entries = performance.getEntriesByName(fullUrl);
         const entry = entries[entries.length - 1];
@@ -120,23 +109,17 @@ async function runAnalysis() {
         const med = valid.length ? [...valid].sort((a,b) => a.ttfb - b.ttfb)[Math.floor(valid.length/2)] : null;
         renderResult({ env: 'local', ttfb: med?.ttfb, detailRows: buildRows(results), label: med?.label });
     } else {
-        // CDN: đo trang hiện tại qua Fetch + Navigation Timing + CDN probes
-        const pageProbe = await measureViaFetch(window.location.origin + window.location.pathname, 'Trang hiện tại (Fetch)', true);
+        // CDN: dùng Fetch API trực tiếp (CORS hợp lệ trên HTTPS)
+        const pageProbe = await measureViaFetch(window.location.origin + window.location.pathname, 'Current Page (Edge)');
+        const results = await Promise.all(CDN_PROBES.map(p => measureViaFetch(p.url, p.label)));
         
-        // Navigation Timing: TTFB chính xác nhất (đo lần tải trang ban đầu)
-        const navTTFB = getNavigationTTFB();
-        const navResult = { label: 'Page Load (Nav Timing)', ttfb: navTTFB, error: navTTFB ? null : 'N/A' };
-        
-        // CDN probes: giữ URL gốc để đo CDN cache HIT (tham khảo)
-        const cdnResults = await Promise.all(CDN_PROBES.map(p => measureViaFetch(p.url, p.label, false)));
-        
-        // TTFB hiển thị: ưu tiên Navigation Timing (chính xác nhất), fallback Fetch
-        const currentTTFB = navTTFB || pageProbe.ttfb;
+        // Ưu tiên số đo latency thực tế mới nhất
+        const currentTTFB = pageProbe.ttfb || getNavigationTTFB();
         
         renderResult({ 
             env: 'cdn', 
             ttfb: currentTTFB, 
-            detailRows: buildRows([navResult, pageProbe, ...cdnResults]), 
+            detailRows: buildRows([pageProbe, ...results]), 
             label: 'CDN Edge' 
         });
     }
