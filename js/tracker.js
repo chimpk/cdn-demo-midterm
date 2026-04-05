@@ -29,39 +29,33 @@ function simulateUpdate() {
     setTimeout(runAnalysis, 1500);
 }
 
-function measureViaImage(url, label) {
-    return new Promise((resolve) => {
-        // Version ảo để giả lập Cache Miss khi cần
-        const cacheBust = `?v=${currentVersion}_` + Math.floor(Math.random() * 1e3);
-        const testUrl   = url + cacheBust;
-        let settled = false;
-
-        const settle = (result) => {
-            if (settled) return;
-            settled = true;
-            observer.disconnect();
-            clearTimeout(timeout);
-            resolve(result);
-        };
-
-        const timeout = setTimeout(() => settle({ url, label, ttfb: null, error: 'timeout' }), 8000);
-
-        const observer = new PerformanceObserver((list) => {
-            for (const entry of list.getEntries()) {
-                if (entry.name.includes(cacheBust)) {
-                    let ttfb = entry.responseStart > 0 
-                        ? Math.max(0, entry.responseStart - entry.requestStart)
-                        : (entry.responseEnd > 0 ? Math.max(0, entry.responseEnd - entry.fetchStart) : null);
-                    settle({ url, label, ttfb, error: null });
-                }
-            }
+async function measureTTFB(url, label) {
+    const start = performance.now();
+    try {
+        // Sử dụng cache: 'no-cache' để ép trình duyệt phải check với Edge Server (CDN)
+        // nhưng CDN vẫn được phép trả về bản HIT. Điều này đo chính xác độ trễ Network tới Edge.
+        const res = await fetch(url + `?v=${currentVersion}`, { 
+            method: 'GET', 
+            mode: 'no-cors', // Dùng no-cors để có thể đo được cả các nguồn khác
+            cache: 'no-cache' 
         });
-
-        observer.observe({ type: 'resource', buffered: false });
-        const img = new Image();
-        img.onload = img.onerror = () => setTimeout(() => settle({ url, label, ttfb: null, error: 'failed' }), 100);
-        img.src = testUrl;
-    });
+        
+        // Lấy dữ liệu TTFB từ Resource Timing API
+        const entries = performance.getEntriesByName(url + `?v=${currentVersion}`);
+        const lastEntry = entries[entries.length - 1];
+        
+        let ttfb = 0;
+        if (lastEntry && lastEntry.responseStart > 0) {
+            ttfb = lastEntry.responseStart - lastEntry.requestStart;
+        } else {
+            // Fallback nếu Resource Timing bị trình duyệt hạn chế
+            ttfb = performance.now() - start;
+        }
+        
+        return { label, ttfb: Math.max(0, ttfb), error: null };
+    } catch (e) {
+        return { label, ttfb: null, error: 'failed' };
+    }
 }
 
 function getNavigationTTFB() {
@@ -74,16 +68,16 @@ async function runAnalysis() {
     showMeasuring();
 
     if (env === 'local') {
-        const results = await Promise.all(ORIGIN_PROBES.map(p => measureViaImage(p.url, p.label)));
+        const results = await Promise.all(ORIGIN_PROBES.map(p => measureTTFB(p.url, p.label)));
         const valid = results.filter(r => r.ttfb != null);
         const med = valid.length ? [...valid].sort((a,b) => a.ttfb - b.ttfb)[Math.floor(valid.length/2)] : null;
         renderResult({ env: 'local', ttfb: med?.ttfb, detailRows: buildRows(results), label: med?.label });
     } else {
-        // Thực hiện đo mới tới chính trang hiện tại để cập nhật TTFB thực tế (thay vì dùng số tĩnh navigation)
-        const pageProbe = await measureViaImage(window.location.origin + window.location.pathname, 'Current Page (Fresh)');
-        const results = await Promise.all(CDN_PROBES.map(p => measureViaImage(p.url, p.label)));
+        // Thực hiện đo thực tế Network tới Edge CDN
+        const pageProbe = await measureTTFB(window.location.origin + window.location.pathname, 'Current Page (Edge)');
+        const results = await Promise.all(CDN_PROBES.map(p => measureTTFB(p.url, p.label)));
         
-        // Ưu tiên lấy số đo mới nhất, nếu lỗi thì mới dùng Navigation Timing cũ
+        // Ưu tiên số đo latency thực tế mới nhất
         const currentTTFB = pageProbe.ttfb || getNavigationTTFB();
         
         renderResult({ 
