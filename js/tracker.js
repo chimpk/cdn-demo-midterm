@@ -72,12 +72,23 @@ function measureViaImage(url, label) {
 }
 
 // ===== Đo TTFB qua Fetch API (dùng khi chạy trên HTTPS) =====
-async function measureViaFetch(url, label) {
-    const sep = url.includes('?') ? '&' : '?';
-    const fullUrl = url + sep + 'v=' + currentVersion + '_' + Date.now();
+// bustCache=true: thêm query string để ép CDN tải lại (dùng cho current page)
+// bustCache=false: giữ URL gốc để đo CDN cache HIT (dùng cho CDN probes)
+async function measureViaFetch(url, label, bustCache = true) {
+    let fullUrl;
+    let fetchOpts;
+    if (bustCache) {
+        const sep = url.includes('?') ? '&' : '?';
+        fullUrl = url + sep + 'v=' + currentVersion + '_' + Date.now();
+        fetchOpts = { method: 'GET', cache: 'no-cache' };
+    } else {
+        fullUrl = url;
+        // no-store: bỏ qua browser cache nhưng giữ nguyên URL → CDN cache HIT
+        fetchOpts = { method: 'GET', cache: 'no-store' };
+    }
     const start = performance.now();
     try {
-        await fetch(fullUrl, { method: 'GET', cache: 'no-cache' });
+        await fetch(fullUrl, fetchOpts);
         // Lấy dữ liệu TTFB từ Resource Timing API
         const entries = performance.getEntriesByName(fullUrl);
         const entry = entries[entries.length - 1];
@@ -110,8 +121,9 @@ async function runAnalysis() {
         renderResult({ env: 'local', ttfb: med?.ttfb, detailRows: buildRows(results), label: med?.label });
     } else {
         // CDN: dùng Fetch API trực tiếp (CORS hợp lệ trên HTTPS)
-        const pageProbe = await measureViaFetch(window.location.origin + window.location.pathname, 'Current Page (Edge)');
-        const results = await Promise.all(CDN_PROBES.map(p => measureViaFetch(p.url, p.label)));
+        const pageProbe = await measureViaFetch(window.location.origin + window.location.pathname, 'Current Page (Edge)', true);
+        // CDN probes: giữ URL gốc (bustCache=false) để đo CDN cache HIT
+        const results = await Promise.all(CDN_PROBES.map(p => measureViaFetch(p.url, p.label, false)));
         
         // Ưu tiên số đo latency thực tế mới nhất
         const currentTTFB = pageProbe.ttfb || getNavigationTTFB();
