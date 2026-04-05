@@ -47,10 +47,10 @@ function measureViaImage(url, label) {
             const entry = entries[entries.length - 1];
             let latency;
             if (entry && entry.responseStart > 0) {
-                // TTFB chính xác (chỉ khi server gửi Timing-Allow-Origin)
-                latency = entry.responseStart - entry.requestStart;
+                // TTFB chính xác = từ lúc bắt đầu fetch tới byte đầu tiên
+                latency = entry.responseStart - entry.fetchStart;
             } else if (entry && entry.duration > 0) {
-                // Cross-origin không có TAO → dùng duration ≈ Network RTT
+                // Cross-origin không có TAO → duration ≈ tổng RTT
                 latency = entry.duration;
             } else {
                 // Fallback: tổng thời gian
@@ -77,8 +77,9 @@ function measureViaImage(url, label) {
 async function measureViaFetch(url, label, bustCache = true) {
     let fullUrl;
     if (bustCache) {
+        // URL ổn định theo version → CDN có thể cache; thay đổi khi invalidate
         const sep = url.includes('?') ? '&' : '?';
-        fullUrl = url + sep + 'v=' + currentVersion + '_' + Date.now();
+        fullUrl = url + sep + '_v=' + currentVersion;
     } else {
         fullUrl = url;
     }
@@ -86,17 +87,20 @@ async function measureViaFetch(url, label, bustCache = true) {
     try {
         // HEAD tránh tải toàn bộ file nặng (jQuery ~87KB), chỉ đo RTT
         const method = bustCache ? 'GET' : 'HEAD';
-        const res = await fetch(fullUrl, { method, cache: 'no-cache', mode: 'cors' })
-            .catch(() => fetch(fullUrl, { method: 'GET', cache: 'no-cache', mode: 'cors' }));
+        // no-store cho page probe: bỏ qua browser cache, đo thẳng tới CDN edge
+        // no-cache cho CDN probe: cho phép CDN trả HIT nhưng luôn validate
+        const cacheMode = bustCache ? 'no-store' : 'no-cache';
+        const res = await fetch(fullUrl, { method, cache: cacheMode, mode: 'cors' })
+            .catch(() => fetch(fullUrl, { method: 'GET', cache: cacheMode, mode: 'cors' }));
         // Lấy dữ liệu TTFB từ Resource Timing API
         const entries = performance.getEntriesByName(fullUrl);
         const entry = entries[entries.length - 1];
         let ttfb;
         if (entry && entry.responseStart > 0) {
-            // TTFB chính xác (cần Timing-Allow-Origin từ server)
-            ttfb = entry.responseStart - entry.requestStart;
+            // TTFB thực = từ lúc bắt đầu fetch tới byte đầu tiên (bao gồm DNS + TCP + TLS)
+            ttfb = entry.responseStart - entry.fetchStart;
         } else if (entry && entry.duration > 0) {
-            // Cross-origin không có TAO → duration ≈ Network RTT (HEAD nên rất gần TTFB)
+            // Cross-origin không có TAO → duration ≈ tổng RTT
             ttfb = entry.duration;
         } else {
             ttfb = performance.now() - start;
@@ -109,7 +113,8 @@ async function measureViaFetch(url, label, bustCache = true) {
 
 function getNavigationTTFB() {
     const nav = performance.getEntriesByType('navigation')[0];
-    return (nav && nav.responseStart > 0) ? Math.max(0, nav.responseStart - nav.requestStart) : null;
+    // fetchStart là điểm bắt đầu thực sự của navigation (bao gồm DNS, TCP, TLS)
+    return (nav && nav.responseStart > 0) ? Math.max(0, nav.responseStart - nav.fetchStart) : null;
 }
 
 async function runAnalysis() {
@@ -149,9 +154,10 @@ function buildRows(results) {
 }
 
 function renderResult({ env, ttfb, detailRows, label }) {
-    const val = ttfb ? ttfb.toFixed(1) : '---';
-    const isSuccess = (env === 'cdn' && ttfb < 100);
-    const isWarning = (env === 'cdn' && ttfb >= 100) || (env === 'local' && !ttfb);
+    const val = (ttfb != null) ? ttfb.toFixed(1) : '---';
+    // Kiểm tra null rõ ràng trước khi so sánh số (null < 100 = true trong JS)
+    const isSuccess = (env === 'cdn' && ttfb != null && ttfb < 100);
+    const isWarning = (env === 'cdn' && (ttfb == null || ttfb >= 100)) || (env === 'local' && !ttfb);
     
     const statusClass = isSuccess ? 'status-success' : (isWarning ? 'status-warning' : 'status-danger');
     const borderClass = isSuccess ? 'border-success' : (isWarning ? '' : 'border-danger');
