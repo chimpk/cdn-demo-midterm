@@ -8,14 +8,14 @@
 
 ```
 [0:00–8:00]   SLIDE (Slides 1→5) — Lý thuyết, lợi ích, nhà cung cấp
-[8:00–13:00]  WEB DEMO — Tắt slide, bật trình duyệt, 3 thực nghiệm trực tiếp
-[13:00–15:00] SLIDE (Slide 9) — Kết luận, cảm ơn
+[8:00–12:30]  WEB DEMO — Tắt slide, bật trình duyệt, 2 thực nghiệm trực tiếp
+[12:30–15:00] SLIDE (Slides 8→9) — Các chiến lược Invalidation + Kết luận
 ```
 
 > 💡 **Chuẩn bị trước khi quay video:**
 > - Mở sẵn **2 tab trình duyệt**:
->   - Tab 1: `file:///d:/doc/CDN_GiuaKy/web_demo/index.html` (Local — Để thấy độ trễ thật tới Mỹ ~300ms)
->   - Tab 2: `https://[username].github.io/cdn-demo/` (Github Pages — Để thấy độ trễ thấp từ CDN PoP SEA < 60ms)
+>   - Tab 1: `file:///d:/doc/cdn_demo/index.html` (Local — Để thấy độ trễ thật tới Mỹ ~300ms)
+>   - Tab 2: `https://chimpk.github.io/cdn-demo-midterm/` (Github Pages + Fastly CDN — TTFB < 60ms)
 > - Mở sẵn slide thuyết trình ở một tab khác để chuyển đổi nhanh (Alt+Tab).
 
 ---
@@ -30,7 +30,7 @@
 
 ---
 
-> 🖥️ **MÀN HÌNH:** Slide 2 (World Wide Wait — So sánh 350ms vs <30ms)
+> 🖥️ **MÀN HÌNH:** Slide 2 (World Wide Wait — So sánh 350ms vs <50ms)
 
 **BẠN:** Để thấy CDN quan trọng đến mức nào, em bắt đầu bằng bài toán vật lý thực tế. Khi không có CDN, máy chủ gốc đặt tại Mỹ phải gánh toàn bộ người dùng toàn cầu. Với Việt Nam, mỗi truy vấn (request) phải vượt hàng ngàn km cáp quang dưới đáy biển — dẫn đến độ trễ, hay còn gọi là **TTFB (Time To First Byte - Thời gian phản hồi byte dữ liệu đầu tiên)**, lên tới **350ms**. Tức là nửa giây chờ trắng trang chỉ để server phát đi tín hiệu đầu tiên. Giới kỹ sư gọi thảm họa này là "World Wide Wait".
 
@@ -48,7 +48,7 @@
 
 **BẠN:** Đi vào ứng dụng thực tế, CDN mang lại 4 lợi ích cốt lõi mà mọi hệ thống lớn đều cần:
 
-Thứ nhất, **Hiệu suất** — TTFB từ 350ms rút xuống còn dưới 30ms, cải thiện trải nghiệm người dùng gần như tuyệt đối.
+Thứ nhất, **Hiệu suất** — TTFB từ 350ms rút xuống còn dưới 50ms, cải thiện trải nghiệm người dùng gần như tuyệt đối.
 
 Thứ hai, **Độ sẵn sàng** — Khi Origin sập, Edge CDN vẫn tiếp tục phục vụ bản Stale Cache, người dùng không hề hay biết web đang gặp sự cố.
 
@@ -62,63 +62,73 @@ Thứ tư, **Bảo mật** — CDN là tấm khiên khổng lồ hấp thụ cá
 
 **BẠN:** Về thị trường, hiện có các nhà cung cấp CDN cực kỳ phổ biến sau:
 
-**Cloudflare** là giải pháp thông dụng với developer nhờ giao diện dễ dùng, Proxy DNS trực tiếp, và hệ thống Custom Rules linh hoạt. **Đây cũng là nền tảng em sử dụng trong Demo.**
+**Cloudflare** là giải pháp thông dụng với developer nhờ giao diện dễ dùng, Proxy DNS trực tiếp, và hệ thống WAF + Custom Rules linh hoạt.
 
 **Akamai** là ông lớn viễn thông chuyên hạ tầng Media Streaming quy mô khổng lồ cho các tập đoàn.
 
 **AWS CloudFront** là giải pháp tích hợp chuyên sâu, lý tưởng cho dự án đã chạy trên Amazon.
 
-Và đặc biệt với lĩnh vực **Lập trình Web Frontend**, các nền tảng như **Vercel** hay **Netlify** đang là lựa chọn ưu tiên hàng đầu do cung cấp sẵn hệ thống Edge Network tối ưu hóa tuyệt đối cho các framework như React/Next.js.
+Và đặc biệt, **Fastly** — đây chính là CDN mà **Github Pages sử dụng** và cũng là nền tảng trong Demo của em. Cùng nhóm này còn có **Vercel** và **Netlify** — đều cung cấp Edge Network tối ưu cho lập trình Frontend.
 
 ---
 
-## PHẦN 3 — WEB DEMO: 3 THỰC NGHIỆM TRỰC TIẾP (8:00 – 13:00)
+## PHẦN 3 — WEB DEMO: 2 THỰC NGHIỆM TRỰC TIẾP (8:00 – 12:30)
 
 > 🖥️ **CHUYỂN MÀN HÌNH:** **TẮT SLIDE** → Bật Tab 1 trình duyệt (`file:///d:/doc/cdn_demo/index.html`)
-> *(Giao diện báo màu Vàng — "Chưa đánh chặn/Local")*
+> *(Giao diện báo màu Đỏ — "Đo thực tế tới Origin Mỹ")*
 
-**BẠN:** Bây giờ em chuyển sang phần Demo thực nghiệm trực tiếp. Em đã tự thiết kế một **Bảng Phân Tích Hiệu Năng Mạng Tự Động** — ứng dụng kết hợp giữa **Resource Timing API** và **Navigation Timing**. Đặc điểm của bản demo này là **ĐO THẬT 100%**, không dùng con số giả lập.
+**BẠN:** Bây giờ em chuyển sang phần Demo thực nghiệm trực tiếp. Em đã tự thiết kế một **Bảng Phân Tích Hiệu Năng Mạng Tự Động** — ứng dụng kết hợp giữa **Resource Timing API** và **Image Probes**. Đặc điểm của bản demo này là **ĐO THẬT 100%**, không dùng con số giả lập.
 
-Đây là giao diện khi em chạy trực tiếp từ tệp tin trên máy tính cá nhân (chưa qua CDN). Mọi người có thể thấy hàng loạt mốc đo (Probes) ở bảng chi tiết bên dưới. Hệ thống đang tự động gửi tín hiệu tới các cụm server gốc tại Mỹ như AWS, HttpBin. Kết quả thực tế máy em hiện tại là **304ms** — Một con số báo động đỏ, chứng minh độ trễ cực cao khi gói tin phải vượt đại dương mà không có sự trợ giúp của CDN.
-
----
-
-**BẠN:** Để minh chứng cho tính ổn định, em sẽ bấm nút **"🔄 Chạy Lại Phân Tích"** ở dưới cùng. Dashboard sẽ bắt đầu đo lại từ đầu các kết nối tới Mỹ. Mọi người thấy chỉ số vẫn duy trì ở mức cao trên 250ms. 
-
-Tiếp đến, em chuyển sang **Tab 2** — là phiên bản đã Deploy lên Github Pages. Chỉ trong tích tắc, Dashboard báo xanh lịm! Chỉ số TTFB rơi thẳng xuống chỉ còn khoảng **38ms**. 
-
-Tại sao lại có sự khác biệt khủng khiếp này? Vì Github Pages sử dụng hạ tầng Fastly CDN. Thay vì gói tin phải bay sang Mỹ như ở tab Local, thì giờ đây máy chủ Edge của Fastly tại Singapore hoặc Hong Kong đã "đánh chặn" và phục vụ ngay lập tức. Ô số 3 báo trạng thái **HIT** kèm các thông số kỹ thuật (Age, Via) — bằng chứng thép cho thấy CDN đang hoạt động hiệu quả.
+Đây là giao diện khi em chạy trực tiếp từ tệp tin trên máy tính cá nhân (chưa qua CDN). Vì chạy từ `file://` nên trình duyệt chặn `fetch()`. Hệ thống tự động dùng kỹ thuật **Image Probes** để vượt CORS, gửi tín hiệu tới các server gốc tại Mỹ: HTTPBin, Ipify, Ident. Kết quả thực tế máy em hiện tại là khoảng **300ms** — chứng minh độ trễ cực cao khi gói tin phải vượt đại dương.
 
 ---
 
-### 🔬 THỰC NGHIỆM 2: CACHE INVALIDATION & VERSIONING (11:30 – 13:00)
+**BẠN:** Để minh chứng cho tính ổn định, em sẽ bấm nút **"🔄 Phân tích lại"**. Mọi người thấy chỉ số vẫn duy trì ở mức cao trên 250ms.
+
+Tiếp đến, em chuyển sang **Tab 2** — là phiên bản đã Deploy lên Github Pages. Chỉ trong tích tắc, Dashboard báo xanh lịm! Chỉ số TTFB rơi thẳng xuống chỉ còn khoảng **40ms** — nhanh hơn khoảng 6–8 lần.
+
+Tại sao? Vì Github Pages sử dụng hạ tầng **Fastly CDN**. Máy chủ Edge của Fastly tại Singapore hoặc Hong Kong đã lưu sẵn dữ liệu và phục vụ ngay lập tức. Ô Cache Header báo trạng thái **HIT** — bằng chứng CDN đang hoạt động.
+
+---
+
+### 🔬 THỰC NGHIỆM 2: CACHE INVALIDATION qua CACHE BUSTING (11:00 – 12:30)
 
 > 🖥️ **MÀN HÌNH:** Click nút **"🚀 Cập nhật App (Invalidation)"**
-> *(Banner vàng hiện ra: Mã nguồn đã cập nhật v2.0... Dashboard tự động đo lại)*
+> *(Banner vàng hiện ra: Cache Busting v2.0... Dashboard tự động đo lại)*
 
-**BẠN:** Tiếp theo là thực nghiệm cực kỳ quan trọng trong quản trị hạ tầng: **Cache Invalidation**. Giả sử em vừa sửa code trên Origin Mỹ và tung ra phiên bản v2.0. Em sẽ bấm nút "Cập nhật App". 
+**BẠN:** Tiếp theo là thực nghiệm về **Cache Invalidation**. Em sẽ bấm nút "Cập nhật App".
 
-Mọi người hãy quan sát bảng chỉ số: Kết quả vừa trả về báo **Vàng/Đỏ** với TTFB cao. Lý do là vì em đã thực hiện lệnh xóa Cache (Purge) ảo — CDN phát hiện URL này có version mới nên buộc phải quay về Mỹ kéo dữ liệu. Đây gọi là trạng thái **Cache MISS**.
+Hệ thống sử dụng kỹ thuật **Cache Busting** — thêm query string `?v=2` vào URL. CDN xem đây là URL hoàn toàn mới nên buộc phải quay về Origin kéo dữ liệu. Kết quả báo **Vàng** với TTFB cao — đây là trạng thái **Cache MISS**.
 
 *(Đợi Dashboard hiện xong kết quả MISS, sau đó bấm tiếp nút 🔄 Phân tích lại)*
 
-**BẠN:** Ngay sau đó, nếu em bấm phân tích lại một lần nữa — Màn hình lập tức xanh trở lại! Tại sao? Vì sau lần MISS đầu tiên, CDN đã kịp thời lưu đệm (Caching) phiên bản v2.0 tại trạm Edge. Đây là minh chứng cho vòng đời của dữ liệu: Phải có **Invalidation** thì người dùng mới nhận được bản mới nhất thay vì dùng bản cũ trong Cache (Stale Data).
-
-Thứ hai là **Custom Rules (Cấu hình ngoại lệ)**. Hệ thống CDN ưu việt ở chỗ cho phép ta ghi đè mọi quy tắc cache tĩnh bằng lệnh ưu tiên, ví dụ: định tuyến thư mục `*domain.com/admin/*` được Bypass (Bỏ qua CDN để dùng dữ liệu động). Quyền kiểm soát này mang lại khả năng linh hoạt tối đa cho kiến trúc thay vì phải chỉnh Code trên server gốc.
+**BẠN:** Bấm phân tích lại — Màn hình lập tức xanh trở lại! Vì sau lần MISS đầu tiên, CDN đã lưu đệm phiên bản v2.0 tại trạm Edge. Đây là minh chứng cho vòng đời của dữ liệu: Phải có **Invalidation** thì người dùng mới nhận được bản mới nhất thay vì bị kẹt với Stale Data.
 
 ---
 
-## PHẦN 4 — SLIDE: KẾT LUẬN (13:00 – 15:00)
+## PHẦN 4 — SLIDE: CÁC CHIẾN LƯỢC INVALIDATION + KẾT LUẬN (12:30 – 15:00)
 
-> 🖥️ **CHUYỂN MÀN HÌNH:** **TẮT TRÌNH DUYỆT** → Bật lại **Slide 9 (Kết luận)**
+> 🖥️ **CHUYỂN MÀN HÌNH:** **TẮT TRÌNH DUYỆT** → Bật lại **Slide 8 (4 Phương pháp Invalidation)**
 
-**BẠN:** Tóm lại, qua 3 thực nghiệm vừa rồi, đề tài đã chứng minh được:
+**BẠN:** Vừa rồi em đã demo Cache Busting. Nhưng trong thực tế CDN có **4 phương pháp Invalidation** chính:
 
-✅ **TTFB giảm từ >200ms xuống <40ms** khi có Edge CDN can thiệp.
+Thứ nhất, **TTL Expiry** — đặt thời hạn sống qua header `Cache-Control: max-age`. Hết thời gian thì Edge tự kiểm tra lại với Origin.
 
-✅ **Cache Invalidation** là kỹ thuật sống còn để đảm bảo người dùng nhận đúng phiên bản mới nhất sau khi cập nhật.
+Thứ hai, **Purge API** — gọi API xóa Cache tức thì. Có thể xóa theo URL, theo Tag, hoặc xóa toàn bộ. Dùng khi cần hotfix khẩn cấp.
 
-✅ **Custom Rules** cho phép kỹ sư kiểm soát chính xác hành vi Cache, không phụ thuộc vào cấu hình mặc định của máy chủ.
+Thứ ba, **Cache Busting** — đúng như vừa demo, thêm `?v=2` vào URL. CDN xem là URL mới và không dùng Cache cũ.
+
+Thứ tư, **Stale-While-Revalidate** — trả bản cũ cho người dùng ngay lập tức, đồng thời cập nhật ngầm ở nền. Người dùng tiếp theo sẽ nhận bản mới. Cân bằng giữa tốc độ và độ tươi mới.
+
+---
+
+> 🖥️ **MÀN HÌNH:** Chuyển sang **Slide 9 (Kết luận)**
+
+**BẠN:** Tóm lại, qua 2 thực nghiệm trực tiếp và phần lý thuyết vừa rồi, đề tài đã chứng minh:
+
+✅ **TTFB giảm từ ~300ms xuống <50ms** khi có CDN Edge — nhanh hơn khoảng 6–8 lần.
+
+✅ **Cache Invalidation** là kỹ thuật sống còn — với 4 phương pháp: TTL, Purge API, Cache Busting, và Stale-While-Revalidate.
 
 Thế giới lập trình mạng ngày nay đã dịch chuyển hoàn toàn ra **Edge Computing** — nơi dữ liệu được xử lý ngay tại biên, sát người dùng nhất. Nắm vững CDN là nắm chìa khoá xây dựng ứng dụng hiệu năng cao, bền vững ở quy mô toàn cầu.
 
@@ -133,13 +143,13 @@ Em xin kết thúc bài báo cáo Giữa Kỳ. Cảm ơn Thầy/Cô đã lắng 
 | Thời gian | Màn hình | Hành động |
 |---|---|---|
 | 0:00 | Slide 1 (Trang bìa) | Mở đầu, giới thiệu bản thân |
-| 0:30 | Slide 2 (World Wide Wait) | Nêu bài toán 350ms vs <30ms |
+| 0:30 | Slide 2 (World Wide Wait) | Nêu bài toán 350ms vs <50ms |
 | 2:00 | Slide 3 (Kiến trúc PoPs) | Giải thích BGP Anycast + sơ đồ |
 | 4:00 | Slide 4 (4 lợi ích) | Trình bày 4 lợi ích sống còn |
-| 6:00 | Slide 5 (Các nền tảng) | So sánh Cloudflare/Akamai/AWS/Vercel |
+| 6:00 | Slide 5 (Các nền tảng) | So sánh Cloudflare/Akamai/AWS/Fastly |
 | 8:00 | **TẮT SLIDE** | Chuyển sang trình duyệt |
-| 8:10 | Tab 1 – Local file | Mở `cdn_demo/index.html` → báo Vàng |
-| 8:30 | **Tab 2 – Github Pages** | Chuyển tab → báo Xanh, HIT |
-| 10:00 | Tab 2 – Bấm Giả lập Origin| Thấy màn hình báo Đỏ trễ quá tải |
-| 11:30 | Tab 2 – F5 phục hồi xanh | Trình bày kiến thức Invalidation |
-| 13:00 | **BẬT SLIDE 9** | Kết luận, cảm ơn, link demo |
+| 8:10 | Tab 1 – Local file | Mở `index.html` → Image Probes báo Đỏ ~300ms |
+| 9:30 | **Tab 2 – Github Pages** | Chuyển tab → báo Xanh ~40ms, HIT |
+| 11:00 | Tab 2 – Bấm "Cập nhật App" | Cache Busting → MISS → đo lại → HIT |
+| 12:30 | **BẬT SLIDE 8** | 4 phương pháp Invalidation |
+| 14:00 | **SLIDE 9** | Kết luận, cảm ơn, link demo |

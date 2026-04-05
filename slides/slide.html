@@ -492,7 +492,7 @@
             <div class="vs-badge">VS</div>
             <div class="compare-card good">
                 <div style="font-size:2rem">⚡</div>
-                <div class="compare-metric green">&lt;30ms</div>
+                <div class="compare-metric green">&lt;50ms</div>
                 <div class="compare-label">TTFB – Có CDN<br><small>Hà Nội → PoP Việt Nam</small></div>
             </div>
         </div>
@@ -528,7 +528,7 @@
             <div class="card">
                 <div class="card-icon">🚀</div>
                 <div class="card-title">Hiệu Suất (Performance)</div>
-                <div class="card-body">Rút ngắn TTFB từ hàng trăm ms xuống còn <strong style="color:var(--green)">&lt; 30ms</strong>. Cache tại Edge = phản hồi tốc độ ánh sáng.</div>
+                <div class="card-body">Rút ngắn TTFB từ hàng trăm ms xuống còn <strong style="color:var(--green)">&lt; 50ms</strong>. Cache tại Edge = phản hồi tốc độ ánh sáng.</div>
             </div>
             <div class="card">
                 <div class="card-icon">🛡️</div>
@@ -557,7 +557,7 @@
             <div class="card" style="border-color: rgba(245,130,32,0.4); text-align:center">
                 <div class="vendor-logo">🟠</div>
                 <div class="card-title" style="font-size:1.1rem; color:#f58220">Cloudflare</div>
-                <div class="card-body">Proxy DNS + Custom Rules. Phổ cập nhất cho startup. <strong style="color:var(--cyan)">Dùng trong Demo.</strong></div>
+                <div class="card-body">Proxy DNS + Custom Rules + WAF. Phổ cập nhất cho startup và developer.</div>
             </div>
             <div class="card" style="border-color: rgba(0,95,190,0.4); text-align:center">
                 <div class="vendor-logo">🔵</div>
@@ -571,8 +571,8 @@
             </div>
             <div class="card" style="border-color: rgba(255,255,255,0.4); text-align:center">
                 <div class="vendor-logo" style="color: #fff;">▲</div>
-                <div class="card-title" style="font-size:1.1rem; color:#ffffff">Vercel / Netlify</div>
-                <div class="card-body">Mạng Edge Network chuyên biệt cho giới Frontend Web (Next.js, React).</div>
+                <div class="card-title" style="font-size:1.1rem; color:#ffffff">Fastly / Vercel / Netlify</div>
+                <div class="card-body">Edge Network cho Frontend. <strong style="color:var(--cyan)">Github Pages dùng Fastly — Demo sử dụng CDN này.</strong></div>
             </div>
         </div>
     </div>
@@ -581,24 +581,27 @@
     <div class="slide" id="s5">
         <div class="time-badge">⏱ 8:00 – 11:00 · Thực Nghiệm 1</div>
         <div class="section-label">Demo Trực Tiếp</div>
-        <div class="slide-title">Đo Lường <span class="gradient-text">TTFB</span></div>
+        <div class="slide-title">Đo Lường <span class="gradient-text">TTFB</span>: Local vs CDN</div>
         <ul class="step-list">
             <li>
                 <div class="step-num">1</div>
-                <div><span class="step-label">Mở từ ổ cứng cục bộ:</span> Giao diện Dashboard báo <span style="color:var(--yellow)">⚠ Vàng</span> – chưa có CDN relay.</div>
+                <div><span class="step-label">Mở từ ổ cứng (file://):</span> Dashboard báo <span style="color:var(--red)">🐢 Đỏ</span> — Image Probes đo tới HTTPBin/Ipify/Ident (US) ≈ <strong style="color:var(--red)">300ms</strong></div>
             </li>
             <li>
                 <div class="step-num">2</div>
-                <div><span class="step-label">Chuyển sang Github Pages:</span> TTFB tụt xuống <span style="color:var(--green)">⚡ &lt;40ms</span> – Fastly Edge PoP Châu Á đã bắt tín hiệu.</div>
+                <div><span class="step-label">Chuyển sang Github Pages:</span> Fetch API đo TTFB qua Fastly Edge PoP → <span style="color:var(--green)">⚡ &lt;50ms</span> — nhanh hơn ~6–8 lần.</div>
             </li>
             <li>
                 <div class="step-num">3</div>
-                <div><span class="step-label">Ô số 3 báo "HIT":</span> Header <code style="color:var(--cyan)">X-Cache: HIT</code> được JS bắt thành công từ Fastly CDN.</div>
+                <div><span class="step-label">Ô Cache Header:</span> JS bắt <code style="color:var(--cyan)">X-Cache: HIT</code> từ Fastly CDN — bằng chứng Edge đang phục vụ.</div>
             </li>
         </ul>
         <div class="code-block">
-            <span class="code-key">const</span> nav = performance.getEntriesByType(<span class="code-val">"navigation"</span>)[0];<br>
-            <span class="code-key">const</span> ttfb = nav.responseStart - nav.requestStart; <span style="color:var(--muted)">// ← TTFB chính xác</span>
+            <span style="color:var(--muted)">// Local: Image Probe vượt CORS file://</span><br>
+            <span class="code-key">const</span> img = <span class="code-key">new</span> Image(); img.src = url + <span class="code-val">'?_nc='</span> + Date.now();<br>
+            <span style="color:var(--muted)">// CDN: Fetch + Resource Timing API</span><br>
+            <span class="code-key">const</span> entry = performance.getEntriesByName(url)[0];<br>
+            <span class="code-key">const</span> ttfb = entry.responseStart - entry.requestStart;
         </div>
     </div>
 
@@ -610,15 +613,15 @@
         <ul class="step-list">
             <li>
                 <div class="step-num">1</div>
-                <div><span class="step-label">Nút "Cập nhật App":</span> Giả lập việc thay đổi mã nguồn Origin và cấp lệnh <strong>Purge Cache</strong> toàn cầu.</div>
+                <div><span class="step-label">Nút "Cập nhật App":</span> Thêm version query (?v=2) vào URL (<strong>Cache Busting</strong>) — CDN xem đây là URL mới, buộc phải tải lại từ Origin.</div>
             </li>
             <li>
                 <div class="step-num">2</div>
-                <div><span class="step-label">Lần quét 1 (Cache MISS):</span> TTFB vọt lên mức cao (>250ms) vì CDN đã xóa bản cũ và phải quay về Mỹ kéo bản mới.</div>
+                <div><span class="step-label">Lần quét 1 (Cache MISS):</span> TTFB vọt lên mức cao vì CDN chưa có bản mới trong Cache, phải quay về Origin kéo dữ liệu.</div>
             </li>
             <li>
                 <div class="step-num">3</div>
-                <div><span class="step-label">Lần quét 2 (Cache HIT):</span> TTFB giảm xuống cực thấp (<40ms) vì bản mới đã được lưu đệm tại PoP SEA.</div>
+                <div><span class="step-label">Lần quét 2 (Cache HIT):</span> TTFB giảm xuống cực thấp (<50ms) vì bản mới đã được lưu đệm tại PoP SEA.</div>
             </li>
             <li>
                 <div class="step-num">4</div>
@@ -627,28 +630,32 @@
         </ul>
     </div>
 
-    <!-- ─── SLIDE 7: CUSTOM RULES ──────────────────────── -->
+    <!-- ─── SLIDE 7: CÁC PHƯƠNG PHÁP INVALIDATION ─────── -->
     <div class="slide" id="s7">
-        <div class="time-badge">⏱ 13:00 – 15:00 · Thực Nghiệm 3</div>
-        <div class="section-label">Yêu Cầu REQ-3</div>
-        <div class="slide-title">Custom Rules / <span class="gradient-text">Page Rules</span></div>
-        <ul class="step-list">
-            <li>
-                <div class="step-num">1</div>
-                <div><span class="step-label">Tạo Page Rule trên Cloudflare:</span> <code style="color:var(--cyan)">*domain.com/*</code> → <strong>Cache Level: Cache Everything</strong></div>
-            </li>
-            <li>
-                <div class="step-num">2</div>
-                <div><span class="step-label">Kích hoạt Rule:</span> Bật trạng thái Active – Cloudflare ép Cache toàn bộ tài nguyên tĩnh bất kể cài đặt máy chủ gốc.</div>
-            </li>
-            <li>
-                <div class="step-num">3</div>
-                <div><span class="step-label">Kiểm tra F12 → Network:</span> Response Header trả về <code style="color:var(--green)">CF-Cache-Status: HIT</code> ngay lần F5 đầu tiên.</div>
-            </li>
-        </ul>
-        <div class="code-block">
-            <span class="code-key">CF-Cache-Status:</span> <span class="code-val">HIT</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--muted)">← Custom Rule đang hoạt động!</span><br>
-            <span class="code-key">X-Cache:</span> <span class="code-val">HIT</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--muted)">← Fastly CDN (Github Pages)</span>
+        <div class="time-badge">⏱ 12:30 – 14:00 · Lý Thuyết</div>
+        <div class="section-label">Các Chiến Lược Invalidation</div>
+        <div class="slide-title">4 Phương Pháp <span class="gradient-text">Invalidation</span></div>
+        <div class="cards-grid col-2" style="max-width:900px">
+            <div class="card">
+                <div class="card-icon">⏰</div>
+                <div class="card-title">TTL Expiry</div>
+                <div class="card-body"><code style="color:var(--cyan)">Cache-Control: max-age=86400</code><br>Hết hạn tự nhiên → Edge revalidate về Origin.<br><small>Phù hợp: Ảnh, font, tài nguyên ít thay đổi.</small></div>
+            </div>
+            <div class="card">
+                <div class="card-icon">🚨</div>
+                <div class="card-title">Purge API</div>
+                <div class="card-body">Gọi API xóa Cache toàn cầu tức thì.<br>3 mức: <strong>by URL</strong>, <strong>by Tag</strong>, <strong>Purge All</strong>.<br><small>Phù hợp: Hotfix khẩn cấp.</small></div>
+            </div>
+            <div class="card" style="border-color: rgba(32,201,151,0.3)">
+                <div class="card-icon">🚧</div>
+                <div class="card-title" style="color:var(--green)">Cache Busting ✅</div>
+                <div class="card-body">Thêm <code style="color:var(--cyan)">?v=2</code> vào URL → CDN xem là URL mới.<br><strong style="color:var(--green)">Đã demo trực tiếp ở TN2.</strong><br><small>Phù hợp: Deploy JS/CSS.</small></div>
+            </div>
+            <div class="card">
+                <div class="card-icon">🔄</div>
+                <div class="card-title">Stale-While-Revalidate</div>
+                <div class="card-body">Trả bản cũ + cập nhật ngầm ở nền.<br>Người dùng tiếp theo nhận bản mới.<br><small>Phù hợp: API, tin tức.</small></div>
+            </div>
         </div>
     </div>
 
@@ -662,9 +669,9 @@
             thông qua các Caching Points phân tán toàn cầu."
         </div>
         <div class="tag-row">
-            <span class="tag tag-cyan">⚡ TTFB &lt; 30ms</span>
+            <span class="tag tag-cyan">⚡ TTFB: 300ms → &lt;50ms</span>
             <span class="tag tag-green">✅ Cache Invalidation</span>
-            <span class="tag tag-purple">🔧 Custom Page Rules</span>
+            <span class="tag tag-purple">🔧 4 Chiến Lược Invalidation</span>
             <span class="tag tag-yellow">🌐 BGP Anycast + PoPs</span>
         </div>
         <div style="margin-top:2rem; font-size:1.1rem; color:var(--muted); text-align:center">

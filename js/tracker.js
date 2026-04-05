@@ -25,33 +25,68 @@ function simulateUpdate() {
     currentVersion++;
     const banner = document.getElementById('env-banner');
     banner.style.cssText = 'background:rgba(255,193,7,0.1);color:#ffc107;border:1px solid #ffc10744;border-radius:12px;padding:1rem;margin-bottom:1rem;';
-    banner.innerHTML = `<strong>🚀 MÃ NGUỒN ĐÃ CẬP NHẬT (v${currentVersion}.0)</strong><br><small>Hệ thống vừa xóa Cache cũ tại PoP. Đang chuẩn bị đo lại luồng dữ liệu mới từ Origin...</small>`;
+    banner.innerHTML = `<strong>🚀 CACHE BUSTING (v${currentVersion}.0)</strong><br><small>Thêm query string (?v=${currentVersion}) vào URL để ép CDN tải lại từ Origin — mô phỏng kịch bản Invalidation.</small>`;
     setTimeout(runAnalysis, 1500);
 }
 
-async function measureTTFB(url, label) {
+// ===== Đo latency qua Image Probe (vượt CORS & file://) =====
+function measureViaImage(url, label) {
+    return new Promise((resolve) => {
+        const cacheBust = Date.now() + '_' + Math.random().toString(36).slice(2);
+        const sep = url.includes('?') ? '&' : '?';
+        const fullUrl = url + sep + '_nc=' + cacheBust;
+        const start = performance.now();
+        let resolved = false;
+
+        const finish = () => {
+            if (resolved) return;
+            resolved = true;
+            const elapsed = performance.now() - start;
+            // Thử Resource Timing API để có số liệu chính xác hơn
+            const entries = performance.getEntriesByName(fullUrl);
+            const entry = entries[entries.length - 1];
+            let latency;
+            if (entry && entry.responseStart > 0) {
+                // TTFB chính xác (chỉ khi server gửi Timing-Allow-Origin)
+                latency = entry.responseStart - entry.requestStart;
+            } else if (entry && entry.duration > 0) {
+                // Cross-origin không có TAO → dùng duration ≈ Network RTT
+                latency = entry.duration;
+            } else {
+                // Fallback: tổng thời gian
+                latency = elapsed;
+            }
+            resolve({ label, ttfb: Math.max(0, latency), error: null });
+        };
+
+        const img = new Image();
+        img.onload = finish;
+        img.onerror = finish; // Vẫn đo được thời gian mạng khi lỗi
+        img.src = fullUrl;
+
+        // Timeout 10 giây
+        setTimeout(() => {
+            if (!resolved) { resolved = true; resolve({ label, ttfb: null, error: 'timeout' }); }
+        }, 10000);
+    });
+}
+
+// ===== Đo TTFB qua Fetch API (dùng khi chạy trên HTTPS) =====
+async function measureViaFetch(url, label) {
+    const sep = url.includes('?') ? '&' : '?';
+    const fullUrl = url + sep + 'v=' + currentVersion + '_' + Date.now();
     const start = performance.now();
     try {
-        // Sử dụng cache: 'no-cache' để ép trình duyệt phải check với Edge Server (CDN)
-        // nhưng CDN vẫn được phép trả về bản HIT. Điều này đo chính xác độ trễ Network tới Edge.
-        const res = await fetch(url + `?v=${currentVersion}`, { 
-            method: 'GET', 
-            mode: 'no-cors', // Dùng no-cors để có thể đo được cả các nguồn khác
-            cache: 'no-cache' 
-        });
-        
+        await fetch(fullUrl, { method: 'GET', cache: 'no-cache' });
         // Lấy dữ liệu TTFB từ Resource Timing API
-        const entries = performance.getEntriesByName(url + `?v=${currentVersion}`);
-        const lastEntry = entries[entries.length - 1];
-        
-        let ttfb = 0;
-        if (lastEntry && lastEntry.responseStart > 0) {
-            ttfb = lastEntry.responseStart - lastEntry.requestStart;
+        const entries = performance.getEntriesByName(fullUrl);
+        const entry = entries[entries.length - 1];
+        let ttfb;
+        if (entry && entry.responseStart > 0) {
+            ttfb = entry.responseStart - entry.requestStart;
         } else {
-            // Fallback nếu Resource Timing bị trình duyệt hạn chế
             ttfb = performance.now() - start;
         }
-        
         return { label, ttfb: Math.max(0, ttfb), error: null };
     } catch (e) {
         return { label, ttfb: null, error: 'failed' };
@@ -68,14 +103,15 @@ async function runAnalysis() {
     showMeasuring();
 
     if (env === 'local') {
-        const results = await Promise.all(ORIGIN_PROBES.map(p => measureTTFB(p.url, p.label)));
+        // Local: dùng Image Probe để vượt hạn chế file:// và CORS
+        const results = await Promise.all(ORIGIN_PROBES.map(p => measureViaImage(p.url, p.label)));
         const valid = results.filter(r => r.ttfb != null);
         const med = valid.length ? [...valid].sort((a,b) => a.ttfb - b.ttfb)[Math.floor(valid.length/2)] : null;
         renderResult({ env: 'local', ttfb: med?.ttfb, detailRows: buildRows(results), label: med?.label });
     } else {
-        // Thực hiện đo thực tế Network tới Edge CDN
-        const pageProbe = await measureTTFB(window.location.origin + window.location.pathname, 'Current Page (Edge)');
-        const results = await Promise.all(CDN_PROBES.map(p => measureTTFB(p.url, p.label)));
+        // CDN: dùng Fetch API trực tiếp (CORS hợp lệ trên HTTPS)
+        const pageProbe = await measureViaFetch(window.location.origin + window.location.pathname, 'Current Page (Edge)');
+        const results = await Promise.all(CDN_PROBES.map(p => measureViaFetch(p.url, p.label)));
         
         // Ưu tiên số đo latency thực tế mới nhất
         const currentTTFB = pageProbe.ttfb || getNavigationTTFB();
@@ -151,11 +187,15 @@ function setDOM(d) {
 
 async function fetchCacheHeader() {
     const el = document.getElementById('cache-hit-status');
-    if (!el || detectEnvironment() === 'local') { el.textContent = 'N/A'; return; }
+    if (!el || detectEnvironment() === 'local') { el.textContent = 'N/A (Local)'; return; }
     try {
         const res = await fetch(window.location.href, { method: 'HEAD', cache: 'no-store' });
-        const hit = res.headers.get('cf-cache-status') || res.headers.get('x-cache') || 'HIT (隱)';
-        el.textContent = hit;
-        el.className = `metric-value ${hit.includes('HIT') ? 'status-success' : 'status-warning'}`;
-    } catch { el.textContent = 'ERROR'; }
+        const hit = res.headers.get('cf-cache-status')
+            || res.headers.get('x-cache')
+            || res.headers.get('x-cache-status');
+        el.textContent = hit || 'N/A';
+        if (hit) {
+            el.className = `metric-value ${hit.includes('HIT') ? 'status-success' : 'status-warning'}`;
+        }
+    } catch { el.textContent = 'N/A'; }
 }

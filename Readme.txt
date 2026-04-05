@@ -22,13 +22,12 @@ II. CẤU TRÚC THƯ MỤC NỘP BÀI
   ├── Bao_Cao_CDN.md              ← Báo cáo kỹ thuật (Markdown)
   ├── Kich_Ban_Thuyet_Trinh.md    ← Kịch bản video thuyết trình
   │
-  ├── web_demo/                   ← Mã nguồn Website Demo (Real-time đo thật)
-  │   ├── index.html              ← Trang chính Dashboard súc tích
-  │   ├── css/style.css           ← Giao diện Glassmorphism cao cấp
-  │   └── js/tracker.js           ← Logic đo REAL latency qua Probes
+  ├── index.html                  ← Trang chính Dashboard súc tích
+  ├── css/style.css               ← Giao diện Glassmorphism cao cấp
+  ├── js/tracker.js               ← Logic đo REAL latency qua Probes
   │
   └── slides/
-      └── index.html              ← Slide thuyết trình chuyên nghiệp
+      └── slide.html              ← Slide thuyết trình chuyên nghiệp
 
 
 III. LINK DEMO TRỰC TUYẾN (KHUYẾN NGHỊ SỬ DỤNG)
@@ -46,8 +45,7 @@ III. LINK DEMO TRỰC TUYẾN (KHUYẾN NGHỊ SỬ DỤNG)
 IV. CHẠY DEMO TRÊN MÁY CỤC BỘ (LOCAL)
 ----------------------------------------------------------------
   Cách mở:
-    1. Mở thư mục  web_demo/
-    2. Double-click vào file  index.html
+    1. Double-click vào file  index.html  (ở thư mục gốc)
 
   🔍 Cơ chế đo thật trên Local:
     - Hệ thống tự động phát hiện môi trường Local (file://).

@@ -9,6 +9,11 @@
 
 1. LỜI MỞ ĐẦU (INTRODUCTION)
 2. CHƯƠNG 1: KHẢO SÁT LÝ THUYẾT VÀ TỔNG QUAN (THEORETICAL SURVEY)
+   - 1.1. Lịch sử hình thành và phát triển của CDN
+   - 1.2. Mạng lưới cốt lõi (Technical Specifications)
+   - 1.3. Các thuật toán lưu đệm và phân tải (Core Principles)
+   - 1.4. Cơ chế Kỹ thuật Quản trị Bộ Đệm (Cache Control)
+   - 1.5. Cơ chế Xóa đệm - Cache Invalidation
 3. CHƯƠNG 2: PHÂN TÍCH ƯU NHƯỢC ĐIỂM VÀ SO SÁNH CHUYÊN SÂU
 4. CHƯƠNG 3: ĐẶC TẢ YÊU CẦU VÀ GIỚI THIỆU ỨNG DỤNG DEMO
 5. CHƯƠNG 4: TRIỂN KHAI VÀ GIẢI THÍCH MÃ NGUỒN ỨNG DỤNG
@@ -20,9 +25,9 @@
 
 ## LỜI MỞ ĐẦU (INTRODUCTION)
 
-Trong kỷ nguyên kỹ thuật số hiện đại, tốc độ và tính xuyển suốt của các ứng dụng Web đóng vai trò quyết định sống còn đến trải nghiệm người dùng và doanh thu của doanh nghiệp. Vấn đề nan giải nhất của kiến trúc Client-Server truyền thống là khoảng cách địa lý vật lý: ánh sáng cần thời gian để di chuyển qua cáp quang biển, kéo theo hiện tượng suy hao và độ trễ phản hồi cực cao nếu người truy cập cách máy chủ gốc hàng vạn kilomet.
+Trong kỷ nguyên kỹ thuật số hiện đại, tốc độ và tính xuyên suốt của các ứng dụng Web đóng vai trò quyết định sống còn đến trải nghiệm người dùng và doanh thu của doanh nghiệp. Vấn đề nan giải nhất của kiến trúc Client-Server truyền thống là khoảng cách địa lý vật lý: ánh sáng cần thời gian để di chuyển qua cáp quang biển, kéo theo hiện tượng suy hao và độ trễ phản hồi cực cao nếu người truy cập cách máy chủ gốc hàng vạn kilomet.
 
-Báo cáo này nghiên cứu chuyên sâu về Mạng Phân Phối Nội Dung (Content Delivery Network - CDN), một công nghệ cơ sở hạ tầng phân tán ra đời nhằm giải quyết triệt để vấn đề "nút thắt cổ chai" mạng toàn cầu. Không chỉ dừng lại ở lý thuyết, nhóm dự án tiến hành xây dựng một ứng dụng Website Demo có tên gọi **"CDN Performance Analyzer"** - đóng vai trò như một Radar nội bộ tự động phân tích và đo lường khoảng thời gian tải Byte đầu tiên (TTFB) chứng minh hiệu suất thực tế của các Node Edge Caching.
+Báo cáo này nghiên cứu chuyên sâu về Mạng Phân Phối Nội Dung (Content Delivery Network - CDN), một công nghệ cơ sở hạ tầng phân tán ra đời nhằm giải quyết triệt để vấn đề "nút thắt cổ chai" mạng toàn cầu. Không chỉ dừng lại ở lý thuyết, tác giả tiến hành xây dựng một ứng dụng Website Demo có tên gọi **"CDN Performance Analyzer"** - đóng vai trò như một Radar nội bộ tự động phân tích và đo lường khoảng thời gian tải Byte đầu tiên (TTFB) chứng minh hiệu suất thực tế của các Node Edge Caching.
 
 Nội dung báo cáo sẽ tuần tự đi từ lịch sử hạ tầng tĩnh, chuyển giao sang mô hình phân tán động Anycast, kết hợp đánh giá thực tiễn kiến trúc đồ án để đem lại cái nhìn học thuật chính xác và bám sát thực tiễn công nghiệp nhất.
 
@@ -34,7 +39,7 @@ Nội dung báo cáo sẽ tuần tự đi từ lịch sử hạ tầng tĩnh, ch
 
 Sự phát triển của CDN không phải là một bước nhảy vọt mà là quá trình tiến hóa bắt buộc của hệ thống Internet để đáp ứng sự bùng nổ của nhân loại. Có thể chia quá trình này thành 4 kỷ nguyên cơ bản:
 
-- **Thế hệ thứ nhất (1998 - 2005) - "World Wide Wait":** Vào cuối thập niên 90, sự ra đời của trình duyệt đồ họa khiến hệ thống mạng toàn cầu nghẽn mạch trầm trọng. Dữ liệu tập trung hoàn toàn vào một máy chủ trung tâm. Nghiên cứu sinh tại MIT, Danny Lewin và Tim Berners-Lee đã xây dựng thuật toán định tuyến phân tán đầu tiên trên The Web, khai sinh ra Akamai Technologies (doanh nghiệp CDN đầu tiên trên thế giới).
+- **Thế hệ thứ nhất (1998 - 2005) - "World Wide Wait":** Vào cuối thập niên 90, sự ra đời của trình duyệt đồ họa khiến hệ thống mạng toàn cầu nghẽn mạch trầm trọng. Dữ liệu tập trung hoàn toàn vào một máy chủ trung tâm. Nghiên cứu sinh tại MIT, Danny Lewin cùng giáo sư Tom Leighton đã xây dựng thuật toán định tuyến phân tán đầu tiên trên The Web, khai sinh ra Akamai Technologies (doanh nghiệp CDN đầu tiên trên thế giới).
 - **Thế hệ thứ hai (2005 - 2010) - Bùng nổ Multimedia:** Sự vươn mình của Video Web (như YouTube) và trào lưu Web 2.0 đòi hỏi CDN không chỉ lưu trữ Ảnh/Văn bản tĩnh mà phải biết luân chuyển bộ đệm Streaming. Đây là kỷ nguyên Amazon AWS CloudFront nhảy vào thị trường điện toán đám mây phân tán.
 - **Thế hệ thứ ba (2010 - 2018) - Tiến hóa An ninh Mạng:** Hàng loạt vụ tống tiền DDoS (Từ chối dịch vụ) quy mô Terabits/s đánh sập Origin Server. Lớp mạng CDN (đại diện bởi Cloudflare) tiến hóa thành một "Tấm áo giáp", bổ sung WAF (Tường lửa lớp Ảo) và bảo vệ cơ sở dữ liệu.
 - **Thế hệ thứ tư (2018 đến nay) - Edge Computing:** CDN trong lịch sử chỉ làm nhiệm vụ Caching (Lưu đệm). Hiện tại, CDN vận hành hệ thống Serverless Computing. Việc xử lý logic Javascript/Rust không cần phải gửi về máy chủ Mỹ, mà được thực thi trực tiếp tại RAM máy chủ CDN tại quốc gia mà người dùng sinh sống (Ví dụ: Cloudflare Workers).
@@ -48,9 +53,16 @@ Một hệ thống CDN tiêu chuẩn quy mô Enterprise sẽ bao gồm 4 khối 
 3.  **Edge Nodes:** Cụm máy vi tính vật lý tích trữ sẵn tài nguyên thể rắn (SSD/NVMe) nằm tại PoP. Chúng đọc bộ nhớ thông qua Header giao thức HTTP.
 4.  **BGP Anycast Routing:** Thay vì giao thức mạng thường là Unicast (1 IP = 1 Server), BGP Anycast là ma thuật cho phép một IP duy nhất (VD: 1.1.1.1) được hàng nghìn cụm mạng trên thế giới phát đi. Bộ định tuyến Router ở đại dương sẽ phân rã gói tin và hướng trình duyệt vào Node Anycast gần nhất.
 
-_(Sinh viên chèn BẢN ĐỒ MẠNG LƯỚI ANYCAST GLOBAL của Cloudflare ở đây - Khuyên dùng ảnh mô phỏng có vị trí các điểm Node trên thế giới - Cỡ ảnh to bằng chiều rộng trang)_
+<!-- CHÈN ẢNH 1: BẢN ĐỒ MẠNG LƯỚI CDN TOÀN CẦU
+     - Nội dung: Bản đồ thế giới với các chấm PoP (Points of Presence) phân bố khắp các châu lục,
+       đường nối cáp quang biển giữa các đại dương.
+     - Gợi ý nguồn: Vào https://www.cloudflare.com/network/ chụp bản đồ mạng,
+       hoặc Google Images "CDN global network map" lấy ảnh minh hoạ.
+     - Kích thước: Full chiều rộng trang (~700px trong Word).
+     - Đặt tên: hinh_1_2_anycast_map.png
+-->
 
-> Mũi tên chỉ vị trí các điểm PoP kết nối xuyên qua các đại dương bằng đường cáp quang.
+> Hình 1.2: Bản đồ mạng lưới Anycast toàn cầu với các điểm PoP kết nối xuyên qua các đại dương bằng đường cáp quang.
 
 ### 1.3. Các thuật toán lưu đệm và phân tải (Core Principles)
 
@@ -79,6 +91,34 @@ Khi triển khai hạ tầng CDN, đội ngũ kiến trúc sư mạng cần áp 
 - **WAF (Web Application Firewall):** Triển khai tập quy tắc Rule Set chắn SQL Injection, XSS, CSRF ngay ở rìa (Edge) chứ không đợi nó chạm vào Datacenter.
 - Thiết lập giới hạn tỷ lệ (Rate Limiting) chặn đứng tín hiệu rác từ các cuộc tấn công DDoS quy mô thấp ngụy trang.
 
+### 1.5. Cơ chế Xóa đệm - Cache Invalidation
+
+Một trong những thách thức khó nhất của CDN là đảm bảo người dùng luôn nhận được nội dung mới nhất trong khi vẫn tận dụng tối đa tốc độ từ Cache. Quá trình loại bỏ hoặc cập nhật nội dung đã lưu đệm trên các Edge Server được gọi là **Cache Invalidation**.
+
+**1. TTL Expiry (Hết hạn tự nhiên):**
+Mỗi tài nguyên được gắn một vòng đời (Time-To-Live) thông qua header `Cache-Control: max-age=N`. Khi hết thời gian này, Edge Server tự động đánh dấu bản Cache là "stale" (hết hạn) và gửi yêu cầu xác nhận lại (revalidation) về Origin Server bằng header `If-None-Match` (ETag) hoặc `If-Modified-Since`. Nếu nội dung chưa thay đổi, Origin trả mã `304 Not Modified` để Edge tiếp tục phục vụ bản cũ mà không cần tải lại toàn bộ file.
+
+**2. Purge API (Xóa chủ động):**
+Khi cần cập nhật khẩn cấp, đội ngũ vận hành có thể gọi **Purge API** của nhà cung cấp CDN để xóa ngay lập tức bản Cache trên toàn bộ Edge Server. Có nhiều mức độ:
+- **Purge by URL:** Xóa cache của một đường dẫn cụ thể.
+- **Purge by Cache-Tag:** Xóa hàng loạt tài nguyên được gắn cùng một nhãn (ví dụ: tất cả ảnh sản phẩm của danh mục A).
+- **Purge Everything:** Quét sạch toàn bộ bộ nhớ đệm — chỉ dùng khi thực sự cần thiết vì sẽ gây tăng đột biến lưu lượng về Origin.
+
+**3. Cache Busting (Phá đệm bằng URL):**
+Kỹ thuật phổ biến nhất trong lập trình Frontend: thêm chuỗi phiên bản hoặc hash vào tên file tĩnh, ví dụ `style.css?v=2` hoặc `style.a3f8c1.css`. Vì CDN lưu Cache theo URL chính xác, URL mới sẽ luôn được coi là tài nguyên chưa có trong Cache, buộc Edge phải kéo bản mới từ Origin.
+
+**4. Stale-While-Revalidate:**
+Header `Cache-Control: stale-while-revalidate=60` cho phép Edge Server vừa trả về nội dung cũ cho người dùng (đảm bảo tốc độ), vừa đồng thời gửi yêu cầu cập nhật ngầm về Origin ở nền. Người dùng tiếp theo sẽ nhận được bản mới nhất. Đây là chiến lược cân bằng tối ưu giữa tốc độ và độ tươi mới của dữ liệu.
+
+**So sánh các phương pháp:**
+
+| Phương pháp | Tốc độ cập nhật | Độ phức tạp | Phù hợp khi |
+| :--- | :--- | :--- | :--- |
+| TTL Expiry | Chậm (chờ hết hạn) | Thấp | Nội dung ít thay đổi (ảnh, font) |
+| Purge API | Tức thì | Trung bình | Hotfix khẩn cấp, nội dung nhạy cảm |
+| Cache Busting | Tức thì | Thấp | Deploy frontend (JS, CSS) |
+| Stale-While-Revalidate | Gần tức thì | Thấp | API công khai, tin tức |
+
 ---
 
 ## CHƯƠNG 2: PHÂN TÍCH ƯU NHƯỢC ĐIỂM VÀ SO SÁNH CHUYÊN SÂU
@@ -88,7 +128,7 @@ Khi triển khai hạ tầng CDN, đội ngũ kiến trúc sư mạng cần áp 
 Lợi ích của CDN không chỉ dừng lại ở chỉ số kỹ thuật mà tác động toàn diện đến kiến trúc và tài chính. Dưới đây là 5 trụ cột lợi ích cốt lõi:
 
 **1. Tối ưu Hiệu năng (Performance Optimization):**
-- **Cắt giảm TTFB:** Thời gian chờ dội lại tín hiệu vật lý giảm từ 350ms xuống chỉ còn dưới 20ms đối với kết nối liên lục địa. Mọi luồng tín hiệu TCP đều được ngắt sớm ở lớp Edge thay vì lội qua đại dương.
+- **Cắt giảm TTFB:** Thời gian chờ dội lại tín hiệu vật lý giảm từ 350ms xuống chỉ còn dưới 50ms đối với kết nối liên lục địa. Mọi luồng tín hiệu TCP đều được ngắt sớm ở lớp Edge thay vì lội qua đại dương.
 - **Tối ưu chuẩn nén tĩnh:** Tự động quy đổi hình ảnh định dạng nặng sang `WebP` và Minify (nén nhỏ) File CSS/JS để tăng tốc độ phân phối đến thiết bị cấu hình thấp.
 - **Tuân thủ chuẩn SEO cốt lõi:** Lợi ích tốc độ đẩy chỉ số Core Web Vitals (LCP, CLS) thăng hạng, trực tiếp biến Website lên hạng 1 Tìm kiếm Google.
 
@@ -108,7 +148,7 @@ Lợi ích của CDN không chỉ dừng lại ở chỉ số kỹ thuật mà t
 
 Tuy nhiên, ứng dụng CDN bộc lộ rất nhiều tử huyệt kỹ thuật trong lập trình phân tán:
 
-1.  **Vấn đề Dữ liệu ôi thiu (Stale Data Synchronization):** Lập trình viên Cập nhật giao diện App. Origin sỡ hữu phiên bản 2, nhưng Node CDN ở Nhật Bản lại chưa báo cáo để xóa Cache (ẫn còn Version 1). Các Users ở quốc gia Nhật Bản bị sập giao diện do gọi hàm API bất đồng bộ.
+1.  **Vấn đề Dữ liệu ôi thiu (Stale Data Synchronization):** Lập trình viên Cập nhật giao diện App. Origin sở hữu phiên bản 2, nhưng Node CDN ở Nhật Bản lại chưa báo cáo để xóa Cache (vẫn còn Version 1). Các Users ở quốc gia Nhật Bản bị sập giao diện do gọi hàm API bất đồng bộ.
 2.  **Chi phí ẩn bùng nổ (Hidden Cost Escalation):** Băng thông CDN cực rẻ, tuy nhiên Cước phí gọi API (Requests Count) theo gói Enterprise vô cùng lớn.
 3.  **Khó Debug Lỗi Mạng:** Sự can thiệp màng lọc của Proxy khiến Tester không thể biết Error 502 Bad Gateway xuất phát từ máy chủ gốc bị sập hay từ nút trạm Caching đang bị chết dở.
 
@@ -142,7 +182,7 @@ Là CDN vĩ đại và lâu đời nhất (Tồn tại từ 1998), Akamai sở h
 **3. AWS CloudFront (Hệ sinh thái Amazon)**
 Một dịch vụ của con át chủ bài Amazon Web Services (AWS), sinh ra để đi kèm với kho lưu trữ hệ thống vật lý nội bộ của Amazon.
 - *Điểm mạnh:* Tính đồng bộ nội tại siêu cao. Developer không cần cấu hình phức tạp lấy dữ liệu. Mọi ngõ ngách đều được API hóa trong 1 giao diện AWS Console.
-- *Nhược điểm:* Mô hình tính tiền theo băng thông (Pay-as-you-go). Dẫn tới rủi ro hóa đơn hàng ngàn Đô la cuối tháng nếu lập trình viên thiết lập sai cú pháp dẫn dới lỗi tải vòng lặp vô tận (Infinite loop ruls).
+- *Nhược điểm:* Mô hình tính tiền theo băng thông (Pay-as-you-go). Dẫn tới rủi ro hóa đơn hàng ngàn Đô la cuối tháng nếu lập trình viên thiết lập sai cú pháp dẫn tới lỗi tải vòng lặp vô tận (Infinite loop rules).
 
 ---
 
@@ -150,7 +190,7 @@ Một dịch vụ của con át chủ bài Amazon Web Services (AWS), sinh ra đ
 
 ### 3.1. Giới thiệu dự án Website Demo
 
-Để minh chứng các lý thuyết viễn thông CDN ở trên hoàn toàn khả thi trong thực địa lập trình thuật toán, nhóm đã phát triển ứng dụng **"CDN Performance Analyzer"** (Tạm dịch: Trạm chẩn đoán băng thông vùng Đệm mạng).
+Để minh chứng các lý thuyết viễn thông CDN ở trên hoàn toàn khả thi trong thực địa lập trình thuật toán, tác giả đã phát triển ứng dụng **"CDN Performance Analyzer"** (Tạm dịch: Trạm chẩn đoán băng thông vùng Đệm mạng).
 
 - **Mục đích (Purpose):** Xây dựng trang đích tự nhận thức thời gian vận hành. Web không chỉ cung cấp thông tin văn bản thuần tùy (như các Web truyền thống) mà cốt lõi của nó là cái "Đồng hồ" mạng cực kì chính xác, tính toán TTFB để chứng thực tốc độ phản hồi của Edge Caching.
 - **Khán giả mục tiêu:** Hội đồng đánh giá bảo vệ môn học, Giảng viên chuyên ngành kiến trúc viễn thông hệ thống phân tán, cũng như Developer tập tành nghiên cứu.
@@ -159,7 +199,15 @@ Một dịch vụ của con át chủ bài Amazon Web Services (AWS), sinh ra đ
   2.  **Header Inspector:** Trực tiếp móc thông số `CF-Cache-Status` ẩn sâu trong Data Request để báo cáo Trạng Thái HIT/MISS.
   3.  **Versioning Tracker:** Quản trị Version hệ thống hỗ trợ giả lập Kịch bản dọn dẹp Cache Invalidation.
 
-_(Sinh viên chèn ảnh CHỤP TOÀN MÀN HÌNH GIAO DIỆN DEMO DASHBOARD của trang web ở đây. Kích thước full chiều ngang màn hình)_
+<!-- CHÈN ẢNH 2: SCREENSHOT GIAO DIỆN DEMO (CHỊ̂ ĐỌ CDN — MÀU XANH)
+     - Cách chụp: Mở https://chimpk.github.io/cdn-demo-midterm/ trên Chrome,
+       đợi Dashboard load xong (báo xanh), nhấn F12 → Device Toolbar (responsive 1280px)
+       hoặc thu nhỏ cửa sổ vừa giao diện, rồi Ctrl+Shift+S chụp full page.
+     - Nội dung cần thấy: Ô TTFB xanh (số ~30-50ms), ô Cache HIT, 
+       bảng Probe chi tiết, banner "CDN Active".
+     - Kích thước: Full chiều rộng trang.
+     - Đặt tên: hinh_3_1_dashboard_cdn.png
+-->
 
 > Hình 3.1: Giao diện trực quan Glassmorphism Dashboard "CDN Performance Analyzer" trên Desktop đo lường TTFB.
 
@@ -179,11 +227,9 @@ Tại sao đồ án không dùng mô hình Client-Server Node.js và Framework R
 
 ### 4.1. Kiến trúc triển khai hạ tầng Website vào công nghệ (Technology Implementation)
 
-Thay vì đặt Website tại các Webhost cổ lỗ sỉ, quy trình triển khai của Nhóm đã tích hợp trực tiếp Công cụ Edge Network như sau:
+Thay vì đặt Website tại các Webhost truyền thống, quy trình triển khai đã tích hợp trực tiếp Công cụ Edge Network như sau:
 Mã nguồn ứng dụng sau khi thiết kế ở Local sẽ đẩy trực tiếp lên hệ sinh thái **Github Repository**. Ngay lập tức, Github kích hoạt quy trình máy ảo CI/CD đưa Website phân phối lên cổng luồng **Github Pages**.
-Tuyệt chiêu của hệ thống hạ tầng Github Pages lúc này là chúng **âm thầm sử dụng Mạng Anycast cực khủng của hãng Fastly Edge CDN**. Bất cứ thiết bị nào gọi vào URL của Project, Hệ thống Router Fastly sẽ định tuyến thiết bị đó đến ngay lập tức Trụ Node tại Sigapore hoặc Hong Kong, đẩy chỉ số TTFB chạm chuẩn thần tốc và đánh một dòng Header báo cáo ngầm Caching HIT.
-
-_(Sinh viên chèn DIAGRAM LUỒNG HOẠT ĐỘNG MERMAID dưới đây)_
+Tuyệt chiêu của hệ thống hạ tầng Github Pages lúc này là chúng **âm thầm sử dụng Mạng Anycast cực khủng của hãng Fastly Edge CDN**. Bất cứ thiết bị nào gọi vào URL của Project, Hệ thống Router Fastly sẽ định tuyến thiết bị đó đến ngay lập tức Trụ Node tại Singapore hoặc Hong Kong, đẩy chỉ số TTFB chạm chuẩn thần tốc và đánh một dòng Header báo cáo ngầm Caching HIT.
 
 > Hình 4.1: Sơ đồ luồng gửi gói tin Anycast của Website khi phân phối qua Edge CDN
 
@@ -206,33 +252,65 @@ graph TD
 ### 4.2. Giải thích chi tiết mã nguồn cốt lõi (Source Code Deep-Dive)
 
 ```javascript
-// Phân hệ Đo lường REAL-TIME qua Image Probes (vượt rào cản CORS Local)
+// Đo latency qua Image Probe (vượt hạn chế CORS & file://)
 function measureViaImage(url, label) {
     return new Promise((resolve) => {
-        // PerformanceObserver bắt ResourceTiming entry chính xác đến 0.01ms
-        const observer = new PerformanceObserver((list) => {
-            for (const entry of list.getEntries()) {
-                if (entry.name.includes(cacheBust)) {
-                    // TTFB chuẩn = responseStart - requestStart
-                    let ttfb = entry.responseStart > 0 
-                        ? (entry.responseStart - entry.requestStart)
-                        : (entry.responseEnd - entry.fetchStart); // Approx RTT
-                    resolve({ label, ttfb });
-                }
+        const cacheBust = Date.now() + '_' + Math.random().toString(36).slice(2);
+        const sep = url.includes('?') ? '&' : '?';
+        const fullUrl = url + sep + '_nc=' + cacheBust;
+        const start = performance.now();
+        let resolved = false;
+
+        const finish = () => {
+            if (resolved) return;
+            resolved = true;
+            const elapsed = performance.now() - start;
+            const entries = performance.getEntriesByName(fullUrl);
+            const entry = entries[entries.length - 1];
+            let latency;
+            if (entry && entry.responseStart > 0) {
+                latency = entry.responseStart - entry.requestStart; // TTFB chính xác
+            } else if (entry && entry.duration > 0) {
+                latency = entry.duration; // Cross-origin → dùng duration ≈ RTT
+            } else {
+                latency = elapsed; // Fallback
             }
-        });
-        observer.observe({ type: 'resource' });
-        // Dùng Image load để vượt CORS khi chạy file://
+            resolve({ label, ttfb: Math.max(0, latency), error: null });
+        };
+
         const img = new Image();
-        img.src = url + '?_nc=' + Date.now();
+        img.onload = finish;
+        img.onerror = finish; // Vẫn đo được thời gian mạng khi lỗi
+        img.src = fullUrl;
+
+        setTimeout(() => { // Timeout 10s
+            if (!resolved) { resolved = true; resolve({ label, ttfb: null, error: 'timeout' }); }
+        }, 10000);
     });
+}
+
+// Đo TTFB qua Fetch API (dùng khi chạy trên HTTPS / CDN)
+async function measureViaFetch(url, label) {
+    const fullUrl = url + (url.includes('?') ? '&' : '?') + 'v=' + Date.now();
+    const start = performance.now();
+    try {
+        await fetch(fullUrl, { method: 'GET', cache: 'no-cache' });
+        const entries = performance.getEntriesByName(fullUrl);
+        const entry = entries[entries.length - 1];
+        let ttfb = (entry && entry.responseStart > 0)
+            ? entry.responseStart - entry.requestStart
+            : performance.now() - start;
+        return { label, ttfb: Math.max(0, ttfb), error: null };
+    } catch (e) {
+        return { label, ttfb: null, error: 'failed' };
+    }
 }
 ```
 
 **Chi tiết thuật toán trên:** 
-1. **Khắc phục CORS:** Khi chạy demo từ máy cá nhân (`file://`), các trình duyệt chặn lệnh `fetch()` tới server Mỹ. Nhóm đã sử dụng kỹ thuật **Image Probes** (tải ảnh favicon/ảnh nhỏ) để vượt qua rào cản này, cho phép đo latency thực tế tới US mà không bị lỗi bảo mật.
-2. **Đo lường đa điểm:** Hệ thống không đo một điểm duy nhất mà thực hiện Probe tới 3 server Mỹ khác nhau (AWS, HttpBin, Example) để lấy chỉ số trung vị (Median), đảm bảo tính khách quan.
-3. **Bảng so sánh PoP:** Giao diện Dashboard tự động liệt kê các Endpoint kèm màu sắc cảnh báo (Xanh cho CDN < 100ms, Đỏ cho Origin > 250ms), giúp người xem nhận diện ngay lập tức sự chênh lệch hiệu năng.
+1. **Khắc phục CORS:** Khi chạy demo từ máy cá nhân (`file://`), trình duyệt chặn `fetch()` tới server Mỹ. Hệ thống sử dụng kỹ thuật **Image Probes** (tải ảnh qua `new Image()`) để vượt qua rào cản này. Kết hợp **Resource Timing API** (`performance.getEntriesByName`) để rút trích `duration` hoặc `responseStart` tùy vào việc server có gửi `Timing-Allow-Origin` hay không. Khi chạy trên CDN (HTTPS), hàm `measureViaFetch()` dùng `fetch()` chuẩn với `cache: 'no-cache'` để đo TTFB chính xác.
+2. **Đo lường đa điểm:** Hệ thống không đo một điểm duy nhất mà thực hiện Probe tới 3 server Mỹ khác nhau (HTTPBin, Ipify, Ident) để lấy chỉ số trung vị (Median), đảm bảo tính khách quan.
+3. **Bảng so sánh PoP:** Giao diện Dashboard tự động liệt kê các Endpoint kèm màu sắc cảnh báo (Xanh cho CDN < 150ms, Đỏ cho Origin > 250ms), giúp người xem nhận diện ngay lập tức sự chênh lệch hiệu năng.
 
 ---
 
@@ -240,16 +318,31 @@ function measureViaImage(url, label) {
 
 ### 5.1. Thực nghiệm 1: Phân tích so sánh hiệu năng (Before VS After Performance)
 
-Để kiểm chứng ứng dụng Demo, báo cáo đưa ra bài kiểm tra đối chiếu thực tiễn bằng con số thông qua cấu hình DNS Trỏ proxy bật mây (Cloudflare).
+Để kiểm chứng ứng dụng Demo, báo cáo đưa ra bài kiểm tra đối chiếu thực tiễn bằng 2 kịch bản truy cập cùng một mã nguồn nhưng khác môi trường mạng:
 
-- **Kịch bản không có CDN (Origin Only):** Khi truy cập hệ thống ở giao thức Origin (Mỹ). Trình độ phân tích mạng của Demo báo ngay kết quả báo động.
-  - **Kết quả:** Thông số TTFB trung bình nhảy từ **270ms lên 312ms**. UI Tracker chuyển thành màu đỏ khẩn cấp cảnh báo `Trạng thái: Máy Cũ Gốc`.
-- **Kịch bản Bật Proxy Network (CDN Activated):** Chỉ bằng thao tác chớp mắt kích hoạt tên miền. Toàn bộ Traffic bị bắt đi vào trạm đệm.
-  - **Kết quả:** Ấn tải trang F5 hai lần. Ở lần thứ 2, bảng điều khiển Tracker Website lập tức xanh lá tuyệt đối. Chỉ báo rớt thảm hại xuống chỉ còn dao động **~18ms cho đến 36ms** (Chỉ bằng một cái chớp mắt). Giảm tải gần 950% độ trễ vật lý. Đây là bằng chứng thép không thể chối cãi về độ kinh hoàng của CDN Caching so với cách thiết kế Mạng kiểu thập niên cũ mà nhóm sinh viên đã làm được.
+- **Kịch bản không có CDN (Local — Origin Only):** Mở file `index.html` trực tiếp từ ổ cứng (`file://`). Hệ thống tự phát hiện môi trường Local và kích hoạt **Image Probes** gửi tín hiệu đo tới 3 server gốc đặt tại Mỹ (HTTPBin, Ipify, Ident). Dashboard báo ngay kết quả báo động.
+  - **Kết quả:** Thông số TTFB trung bình dao động trong khoảng **270–312ms**. UI Tracker chuyển thành màu đỏ khẩn cấp cảnh báo `Trạng thái: Origin Server`.
+- **Kịch bản có CDN (Github Pages + Fastly Edge):** Mở cùng mã nguồn đã deploy lên `https://chimpk.github.io/cdn-demo-midterm/`. Hệ thống chuyển sang dùng **Fetch API** đo TTFB qua Fastly CDN Edge PoP (Singapore/Hong Kong).
+  - **Kết quả:** Bảng điều khiển Tracker Website lập tức xanh lá tuyệt đối. Chỉ số TTFB dao động chỉ còn **~30ms cho đến 50ms**. Nhanh hơn khoảng 6–8 lần so với kết nối trực tiếp (giảm khoảng 85% độ trễ). Ô Cache Header báo `HIT` — bằng chứng Edge đang phục vụ từ bộ nhớ đệm. Đây là minh chứng thực nghiệm cho thấy hiệu quả của CDN Edge Caching so với kiến trúc Client-Server truyền thống.
 
-_(Sinh viên dán ảnh 02 TẤM PHÂN TÍCH SO SÁNH SCREENSHOT TTFB ĐỎ VÀ XANH NẰM CẠNH NHAU ĐỂ SO SÁNH VÀO ĐÂY, HOẶC CHÈN 2 ẢNH VÀO BẢNG WORd)_
+<!-- CHÈN ẢNH 3: SO SÁNH TRƯỚC/SAU — 2 ẢNH ĐẶT CẠNH NHAU
+     Ảnh trái (Local — Đỏ):
+       - Mở file:///d:/doc/cdn_demo/index.html trên Chrome
+       - Đợi Dashboard load (báo đỏ, TTFB ~300ms)
+       - Chụp màn hình vùng Dashboard
+       - Đặt tên: hinh_5_1a_local_do.png
 
-> Hình 5.1: Đối chiếu hình thái giao diện Trước và Sau khi hệ thống Caching tiếp nhận gói mạng.
+     Ảnh phải (CDN — Xanh):
+       - Mở https://chimpk.github.io/cdn-demo-midterm/ trên Chrome
+       - Đợi Dashboard load (báo xanh, TTFB ~30-50ms)
+       - Chụp màn hình vùng Dashboard
+       - Đặt tên: hinh_5_1b_cdn_xanh.png
+
+     Khi dán vào Word: Tạo bảng 1 hàng 2 cột, mỗi cột 1 ảnh, 
+     hoặc dùng Markdown: `| ![Local](...) | ![CDN](...) |`
+-->
+
+> Hình 5.1: Đối chiếu giao diện TTFB Đỏ (Local ~300ms) và Xanh (CDN ~40ms) khi hệ thống Caching tiếp nhận gói mạng.
 
 ### 5.2. Thực nghiệm 2: Phân tích Tình huống Vận hành: Xóa rác Caching (Invalidation)
 
@@ -265,24 +358,28 @@ Lý thuyết (Chương 1) đã cảnh báo về Caching Stale Data (Dữ liệu 
 
 > Hình 5.2: Tình huống rủi ro lỗi thay đổi mã nguồn do lưu đệm Stale Data.
 
-### 5.3. Thực nghiệm 3: Triển khai Kỹ thuật Cache Rules Custom (Nâng cao)
+### 5.3. Phân tích mở rộng: Chiến lược Cache Rules trong thực tế doanh nghiệp
 
-CDN Cung cấp nền tảng quản trị vi mô thông qua bộ quy tắc Page Rules linh hoạt, cho phép phân biệt rõ rệt phân luồng dữ liệu. Kỹ thuật viên áp dụng các mẫu cấu hình quy tắc như sau:
-- **Cache toàn bộ (TTL 30 ngày dài hạn):** Quản trị cấp tốc những thư mục tài nguyên tĩnh `*domain.com/static/*` hoặc `/images/*` -> Gán cờ **Cache Everything**.
-- **Cache ngắn hạn (TTL 1 giờ):** Các thư mục API công khai truy xuất cường độ cao thư `/api/public/*`.
-- **Tuyệt đối không lấy Cache (Trỏ thẳng nhánh Origin):** Các bộ xử lý quản trị hoặc thanh toán `/admin/*`, `/cart/*`.
-Tính thực tiễn: Lấy quyền quản trị độc đoán của Router giật ngược lại ý chí của mã nguồn C# hay React thiết đặt ở máy gốc, thao túng trực tiếp băng thông mạng mà không làm khó Code Backend.
+Ngoài 2 thực nghiệm trực tiếp ở trên, phần này trình bày kiến thức mở rộng về **Cache Rules** — bộ quy tắc mà các CDN thương mại (Cloudflare Page Rules, Fastly VCL, AWS Cache Policies) cung cấp cho đội vận hành để phân biệt rõ rệt phân luồng dữ liệu theo từng đường dẫn:
+
+- **Cache toàn bộ — TTL dài hạn (30 ngày):** Áp dụng cho thư mục tài nguyên tĩnh `*/static/*`, `/images/*`, `/fonts/*`. Gán cờ **Cache Everything** với `max-age` lớn vì nội dung hiếm khi thay đổi.
+- **Cache ngắn hạn — TTL 1 giờ:** Áp dụng cho API công khai truy xuất cường độ cao `/api/public/*`. Cân bằng giữa tốc độ và độ tươi mới.
+- **Bypass Cache — Trỏ thẳng Origin:** Các tuyến xử lý nhạy cảm như `/admin/*`, `/cart/*`, `/api/auth/*` tuyệt đối không Cache vì chứa dữ liệu cá nhân hóa.
+
+**Ý nghĩa thực tiễn:** Cache Rules cho phép đội hạ tầng kiểm soát hành vi caching ở tầng CDN, độc lập với header `Cache-Control` do Backend thiết lập. Điều này đặc biệt hữu ích khi cần override logic caching mà không cần deploy lại mã nguồn.
+
+> **Lưu ý:** Demo trong đồ án sử dụng Github Pages (Fastly CDN) với cấu hình Cache mặc định. Các Cache Rules nâng cao như trên yêu cầu tài khoản CDN có dashboard quản trị (Cloudflare Pro, Fastly Console, AWS Console).
 
 ### 5.4. Tính hiệu quả toàn diện và Thách thức quá trình phát triển (Effectiveness & Challenges encountered)
 
-- **Tính hiệu quả thiết kế (Effectiveness):** Không dừng ở văn phong lý thuyết, việc nhóm đồ án lập trình thành công hệ thống "Theo dấu Packet Layer mạng" với đồ họa cao cấp Glassmorphism cho thấy sự kết hợp hoàn hảo giữa Network Engineering và Frontend Design.
-- **Thách thức thiết kế (Challenges):** Khó khăn lớn nhất trong quá trình xây dựng Demo là CORS Header chặn yêu cầu API trong hàm Javascript `fetch()`. Khi cố gắng giả lập một Cache Hit Check xuyên qua 2 lớp mạng, Trình duyệt chặn hàm Response báo lỗi `Access-Control-Allow-Origin`. Phải điều chỉnh chuyển hướng gọi thư viện ảnh tĩnh `.css` thay cho `XMLHTTPRequest`. Đây là bài học xương máu kinh điển trong môi trường System Architect.
+- **Tính hiệu quả thiết kế (Effectiveness):** Không dừng ở văn phong lý thuyết, việc tác giả lập trình thành công hệ thống "Theo dấu Packet Layer mạng" với đồ họa cao cấp Glassmorphism cho thấy sự kết hợp hoàn hảo giữa Network Engineering và Frontend Design.
+- **Thách thức thiết kế (Challenges):** Khó khăn lớn nhất trong quá trình xây dựng Demo là **CORS Policy** chặn yêu cầu `fetch()` khi chạy từ giao thức `file://`. Trình duyệt từ chối trả về Response Header, khiến việc đo TTFB trở nên bất khả thi bằng phương pháp thông thường. Giải pháp: chuyển sang kỹ thuật **Image Probes** — tạo đối tượng `new Image()` để gửi request (không bị CORS chặn), kết hợp **Resource Timing API** (`performance.getEntriesByName()`) để rút trích `duration` làm chỉ số đo thay thế. Khi chạy trên HTTPS (CDN), hệ thống tự động chuyển sang `fetch()` chuẩn. Đây là bài học thực tiễn quan trọng về Cross-Origin Security trong lập trình Web.
 
 ---
 
 ## CHƯƠNG 6: KẾT LUẬN (CONCLUSION)
 
-Ngành Kỹ thuật lập trình Web và Hạ tầng hệ thống Cấu trúc đang vận hành theo một con sóng phi Tập trung toàn vẹn (Decentralization of Resources Architecture). Căn cứ theo kết quả thực nghiệm chỉ số cực đỉnh TTFB ở Chương 5 và đo lường sự vượt trội qua ứng dụng Demo Radar Code được nhóm thiết kế tay, CDN rực sáng, không chỉ giúp Cổng thông tin Thoát khỏi "Tầng ngục tốc độ Internet" của mạng cáp quang đáy biển yếu kém, mà nó còn đóng vai trò là một vách tường bảo an (Web Application Firewall) vững vàng số 1 thế giới để triệt hạ DDoS ngay tại Vùng biên giới.
+Ngành Kỹ thuật lập trình Web và Hạ tầng hệ thống Cấu trúc đang vận hành theo một con sóng phi Tập trung toàn vẹn (Decentralization of Resources Architecture). Căn cứ theo kết quả thực nghiệm chỉ số cực đỉnh TTFB ở Chương 5 và đo lường sự vượt trội qua ứng dụng Demo Radar Code được tác giả thiết kế, CDN rực sáng, không chỉ giúp Cổng thông tin Thoát khỏi "Tầng ngục tốc độ Internet" của mạng cáp quang đáy biển yếu kém, mà nó còn đóng vai trò là một vách tường bảo an (Web Application Firewall) vững vàng số 1 thế giới để triệt hạ DDoS ngay tại Vùng biên giới.
 
 Thông qua việc khảo sát nền tảng Anycast Router, thuật toán làm mới Caching Time-to-Live và thực hành bóc tách thông số mạng của dự án học phần này, cá nhân thực hành báo cáo đã sở hữu được góc nhìn Vĩ mô kiến trúc đối với tư duy phát triển dự án CDN-Friendly, kiến tạo các hệ thống Scale-up hàng triệu Ccu/Giây tại các doanh nghiệp tỷ đô.
 
@@ -294,7 +391,12 @@ Chân thành cảm ơn Hội đồng Giảng viên Khoa Công nghệ Thông tin 
 
 ## TÀI LIỆU THAM KHẢO
 
-1. RFC 7234 - Hypertext Transfer Protocol (HTTP/1.1): Caching, M. Nottingham, 2014.
-2. Web Performance In Action, Jeremy L. Wagner, 2018 (Chương Caching Analytics).
-3. Cloudflare Technical Documentation - "Understanding CDN caching and Anycast Routing" (2024).
-4. Khóa học Hệ thống Ảo hóa và Mạng Viễn Thông Cáp Quang - Tài liệu nội bộ.
+1. RFC 7234 — "Hypertext Transfer Protocol (HTTP/1.1): Caching", M. Nottingham, R. Fielding, IETF, 2014. https://datatracker.ietf.org/doc/html/rfc7234
+2. J. L. Wagner, *Web Performance In Action*, Manning Publications, 2018 (Chương 6: Caching Analytics).
+3. Cloudflare Learning Center — "What is a CDN? | How do CDNs work?", 2024. https://www.cloudflare.com/learning/cdn/what-is-a-cdn/
+4. Fastly Documentation — "How caching and CDNs work", 2024. https://www.fastly.com/documentation/guides/concepts/cache/
+5. MDN Web Docs — "Resource Timing API", Mozilla, 2024. https://developer.mozilla.org/en-US/docs/Web/API/Resource_Timing_API
+6. MDN Web Docs — "PerformanceResourceTiming", Mozilla, 2024. https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming
+7. GitHub Docs — "About GitHub Pages", GitHub Inc., 2024. https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages
+8. Akamai Technologies — "What Is a Content Delivery Network (CDN)?", 2024. https://www.akamai.com/glossary/what-is-a-cdn
+9. AWS Documentation — "Amazon CloudFront Developer Guide", Amazon Web Services, 2024. https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/
