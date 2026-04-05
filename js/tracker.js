@@ -11,9 +11,8 @@ const ORIGIN_PROBES = [
 ];
 
 const CDN_PROBES = [
-    // File nhỏ (<2KB) để đo TTFB thuần, không bị nhiễu bởi download time
-    { url: 'https://cdn.jsdelivr.net/npm/is-number@7.0.0/index.js', label: 'jsDelivr (Fastly SEA)' },
-    { url: 'https://cdnjs.cloudflare.com/ajax/libs/tiny-emitter/2.1.0/tinyemitter.min.js', label: 'cdnjs (Cloudflare SEA)' }
+    { url: 'https://cdn.jsdelivr.net/npm/is-number@7.0.0/index.js', label: 'jsDelivr (Fastly)' },
+    { url: 'https://cdnjs.cloudflare.com/ajax/libs/tiny-emitter/2.1.0/tinyemitter.min.js', label: 'cdnjs (Cloudflare)' }
 ];
 
 function detectEnvironment() {
@@ -121,18 +120,23 @@ async function runAnalysis() {
         const med = valid.length ? [...valid].sort((a,b) => a.ttfb - b.ttfb)[Math.floor(valid.length/2)] : null;
         renderResult({ env: 'local', ttfb: med?.ttfb, detailRows: buildRows(results), label: med?.label });
     } else {
-        // CDN: dùng Fetch API trực tiếp (CORS hợp lệ trên HTTPS)
-        const pageProbe = await measureViaFetch(window.location.origin + window.location.pathname, 'Current Page (Edge)', true);
-        // CDN probes: giữ URL gốc (bustCache=false) để đo CDN cache HIT
-        const results = await Promise.all(CDN_PROBES.map(p => measureViaFetch(p.url, p.label, false)));
+        // CDN: đo trang hiện tại qua Fetch + Navigation Timing + CDN probes
+        const pageProbe = await measureViaFetch(window.location.origin + window.location.pathname, 'Trang hiện tại (Fetch)', true);
         
-        // Ưu tiên số đo latency thực tế mới nhất
-        const currentTTFB = pageProbe.ttfb || getNavigationTTFB();
+        // Navigation Timing: TTFB chính xác nhất (đo lần tải trang ban đầu)
+        const navTTFB = getNavigationTTFB();
+        const navResult = { label: 'Page Load (Nav Timing)', ttfb: navTTFB, error: navTTFB ? null : 'N/A' };
+        
+        // CDN probes: giữ URL gốc để đo CDN cache HIT (tham khảo)
+        const cdnResults = await Promise.all(CDN_PROBES.map(p => measureViaFetch(p.url, p.label, false)));
+        
+        // TTFB hiển thị: ưu tiên Navigation Timing (chính xác nhất), fallback Fetch
+        const currentTTFB = navTTFB || pageProbe.ttfb;
         
         renderResult({ 
             env: 'cdn', 
             ttfb: currentTTFB, 
-            detailRows: buildRows([pageProbe, ...results]), 
+            detailRows: buildRows([navResult, pageProbe, ...cdnResults]), 
             label: 'CDN Edge' 
         });
     }
