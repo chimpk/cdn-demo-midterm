@@ -11,8 +11,9 @@ const ORIGIN_PROBES = [
 ];
 
 const CDN_PROBES = [
-    { url: 'https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js', label: 'jsDelivr (Fastly SEA)' },
-    { url: 'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js', label: 'cdnjs (Cloudflare SEA)' }
+    // File nhỏ (<2KB) để đo TTFB thuần, không bị nhiễu bởi download time
+    { url: 'https://cdn.jsdelivr.net/npm/is-number@7.0.0/index.js', label: 'jsDelivr (Fastly SEA)' },
+    { url: 'https://cdnjs.cloudflare.com/ajax/libs/tiny-emitter/2.1.0/tinyemitter.min.js', label: 'cdnjs (Cloudflare SEA)' }
 ];
 
 function detectEnvironment() {
