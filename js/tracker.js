@@ -79,9 +79,19 @@ async function runAnalysis() {
         const med = valid.length ? [...valid].sort((a,b) => a.ttfb - b.ttfb)[Math.floor(valid.length/2)] : null;
         renderResult({ env: 'local', ttfb: med?.ttfb, detailRows: buildRows(results), label: med?.label });
     } else {
-        const navTTFB = getNavigationTTFB();
+        // Thực hiện đo mới tới chính trang hiện tại để cập nhật TTFB thực tế (thay vì dùng số tĩnh navigation)
+        const pageProbe = await measureViaImage(window.location.origin + window.location.pathname, 'Current Page (Fresh)');
         const results = await Promise.all(CDN_PROBES.map(p => measureViaImage(p.url, p.label)));
-        renderResult({ env: 'cdn', ttfb: navTTFB, detailRows: buildRows([{label:'Page load (v' + currentVersion + ')', ttfb:navTTFB}, ...results]), label: 'CDN' });
+        
+        // Ưu tiên lấy số đo mới nhất, nếu lỗi thì mới dùng Navigation Timing cũ
+        const currentTTFB = pageProbe.ttfb || getNavigationTTFB();
+        
+        renderResult({ 
+            env: 'cdn', 
+            ttfb: currentTTFB, 
+            detailRows: buildRows([pageProbe, ...results]), 
+            label: 'CDN Edge' 
+        });
     }
     fetchCacheHeader();
 }
