@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="app-version" content="1.0.0">
+    <title>CDN Performance Analyzer</title>
+    <link rel="stylesheet" href="css/style.css?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-mesh"></div>
+    <div class="dashboard-container glass">
+        <header class="dashboard-header">
+            <h1>Bộ Phân Tích Hiệu Năng CDN</h1>
+            <p>Bảng Đo Lường Thông Số Mạng Tự Động</p>
+        </header>
+
+        <!-- Banner trạng thái môi trường — được điền bởi JS -->
+        <div id="env-banner"></div>
+
+        <div class="metrics-grid">
+            <div class="metric-card glass" id="ttfb-card">
+                <div class="metric-title">TTFB (Độ trễ Response Byte Đầu Tiên)</div>
+                <div class="metric-value" id="ttfb-value">-- ms</div>
+                <div class="metric-status" id="ttfb-status">Đang dò vòng lặp mạng...</div>
+            </div>
+
+            <div class="metric-card glass">
+                <div class="metric-title">Trạng Thái Kết Nối</div>
+                <div class="metric-value" id="edge-status">Chờ quét</div>
+                <div class="metric-desc" id="edge-desc">Đang xác định nguồn gốc lưu lượng...</div>
+            </div>
+            
+            <div class="metric-card glass">
+                <div class="metric-title">CF-CACHE-STATUS</div>
+                <div class="metric-value" id="cache-hit-status">N/A</div>
+                <div class="metric-desc">Bắt Header Máy Chủ Biên</div>
+            </div>
+        </div>
+
+        <div class="actions glass">
+            <h2>Hệ Thống Phân Tích Thời Gian Thực</h2>
+            <p style="font-size: 0.9rem; margin-bottom: 1.5rem;">
+                Dữ liệu được thu thập trực tiếp thông qua <strong>Resource Timing API</strong> và <strong>Navigation Timing</strong>.<br>
+                Hệ thống tự động so sánh hiệu năng giữa máy trạm và các PoP Edge gần nhất.
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="action-btn" onclick="runAnalysis()">🔄 Phân tích lại</button>
+                <button class="action-btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);" onclick="simulateUpdate()">🚀 Cập nhật App (Invalidation)</button>
+            </div>
+        </div>
+        <footer style="margin-top: 2rem; opacity: 0.7; font-size: 0.9rem;">
+            <a href="slides/slide.html" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">📁 Xem Slide Thuyết Trình</a>
+            <span style="margin: 0 1rem; color: rgba(255,255,255,0.2);">|</span>
+            <a href="https://github.com/chimpk/cdn-demo-midterm" target="_blank" style="color: var(--text-main); text-decoration: none;">GitHub Repo</a>
+        </footer>
+    </div>
+    <script src="js/tracker.js"></script>
+</body>
+</html>
