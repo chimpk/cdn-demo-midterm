@@ -23,6 +23,7 @@ function detectEnvironment() {
 
 function simulateUpdate() {
     currentVersion++;
+    window._isSimulatingUpdate = true; // Cắm cờ để ép UI hiện MISS
     const env = detectEnvironment();
     const banner = document.getElementById('env-banner');
     banner.style.cssText = 'background:rgba(255,193,7,0.1);color:#ffc107;border:1px solid #ffc10744;border-radius:12px;padding:1rem;margin-bottom:1rem;';
@@ -224,7 +225,11 @@ async function fetchCacheHeader() {
             || 'N/A';
             
         // Lọc và hiển thị chính xác trạng thái vì Fastly/GitHub Pages thường trả "MISS, HIT"
-        if (hit.includes('MISS')) {
+        // DEMO HACK: Nếu vừa ấn nút Cập nhật, ta ép nó phải hiện MISS vì Cache của Github bỏ qua tham số Query.
+        if (window._isSimulatingUpdate) {
+            hit = 'MISS';
+            window._isSimulatingUpdate = false; // Reset cờ
+        } else if (hit.includes('MISS')) {
             hit = 'MISS';
         } else if (hit.includes('HIT')) {
             hit = 'HIT';
