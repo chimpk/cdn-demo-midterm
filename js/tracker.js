@@ -1,4 +1,5 @@
-let currentVersion = 1;
+const urlParams = new URLSearchParams(window.location.search);
+let currentVersion = parseInt(urlParams.get('_v')) || 1;
 
 document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('load', () => setTimeout(runAnalysis, 200));
@@ -22,16 +23,22 @@ function detectEnvironment() {
 }
 
 function simulateUpdate() {
-    currentVersion++;
+    const nextVersion = currentVersion + 1;
     const env = detectEnvironment();
     const banner = document.getElementById('env-banner');
     banner.style.cssText = 'background:rgba(255,193,7,0.1);color:#ffc107;border:1px solid #ffc10744;border-radius:12px;padding:1rem;margin-bottom:1rem;';
     if (env === 'local') {
+        currentVersion = nextVersion;
         banner.innerHTML = `<strong>🚀 CACHE BUSTING (v${currentVersion}.0) — Chế độ Local</strong><br><small>⚠️ Cache Busting (?_v=${currentVersion}) chỉ có hiệu lực khi chạy trên CDN. Ở local (file://), không có Edge Cache để Invalidate. Đang đo lại Origin...</small>`;
+        setTimeout(runAnalysis, 1500);
     } else {
-        banner.innerHTML = `<strong>🚀 CACHE BUSTING (v${currentVersion}.0)</strong><br><small>Thêm query string (?_v=${currentVersion}) vào URL để ép CDN tải lại từ Origin — mô phỏng kịch bản Invalidation.</small>`;
+        banner.innerHTML = `<strong>🚀 CACHE BUSTING (v${nextVersion}.0)</strong><br><small>Tải lại trang với query string (?_v=${nextVersion}) để ép CDN tải lại từ Origin — mô phỏng kịch bản Invalidation.</small>`;
+        setTimeout(() => {
+            const url = new URL(window.location.href);
+            url.searchParams.set('_v', nextVersion);
+            window.location.href = url.toString();
+        }, 1500);
     }
-    setTimeout(runAnalysis, 1500);
 }
 
 // ===== Đo latency qua Image Probe (vượt CORS & file://) =====
