@@ -218,12 +218,22 @@ async function fetchCacheHeader() {
         // Dùng 'no-cache' thay vì 'no-store' giúp bỏ qua browser-cache nhưng vẫn cho phép CDN HIT.
         const targetUrl = 'css/style.css?_v=' + currentVersion;
         const res = await fetch(targetUrl, { method: 'HEAD', cache: 'no-cache' });
-        const hit = res.headers.get('cf-cache-status')
+        let hit = res.headers.get('cf-cache-status')
             || res.headers.get('x-cache')
-            || res.headers.get('x-cache-status');
-        el.textContent = hit || 'N/A';
-        if (hit) {
-            el.className = `metric-value ${hit.includes('HIT') ? 'status-success' : 'status-warning'}`;
+            || res.headers.get('x-cache-status')
+            || 'N/A';
+            
+        // Lọc và hiển thị chính xác trạng thái vì Fastly/GitHub Pages thường trả "MISS, HIT"
+        if (hit.includes('MISS')) {
+            hit = 'MISS';
+        } else if (hit.includes('HIT')) {
+            hit = 'HIT';
+        }
+
+        el.textContent = hit;
+        
+        if (hit !== 'N/A') {
+            el.className = `metric-value ${hit === 'HIT' ? 'status-success' : 'status-warning'}`;
         }
     } catch { el.textContent = 'N/A'; }
 }
